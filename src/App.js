@@ -37,7 +37,7 @@ export default class App extends Component{
     setInterval(async ()=>{
       let currentTime = await this.player.currentTime();
       let caption = this.state.subtitle.slice().reverse().find(caption => caption.start <= currentTime);
-      if(caption){
+      if(caption && caption.text != this.state.currentCaption){
         console.log(caption);
         this.setState({currentCaption: caption.text});
       }
@@ -65,7 +65,7 @@ export default class App extends Component{
   getSubTitle = async () => {
     let enTrack = this.state.tracks.find(track=>track.lang_code=='en');
     if(enTrack){
-      let xmlStr = await getText(`https://www.youtube.com/api/timedtext?lang=${enTrack.lang_code}&v=${videoId}&name=${enTrack.name}&tlang=de`);
+      let xmlStr = await getText(`https://www.youtube.com/api/timedtext?lang=${enTrack.lang_code}&v=${videoId}&name=${enTrack.name}`);
 
       if(xmlStr){
         let parser = new DOMParser();
