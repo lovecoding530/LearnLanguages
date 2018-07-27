@@ -14,38 +14,44 @@ import {DOMParser} from 'xmldom';
 import { xmlToJson } from './utils';
 import { getText } from './api';
 
+// Endpoint to get the subtitle tracks
 // https://www.youtube.com/api/timedtext?type=list&v=3wszM2SA12E
+
+// Endpoint to get the subtitle for video id and support translate
 // https://www.youtube.com/api/timedtext?lang=en&v=7068mw-6lmI&name=English&tlang=lv
 // https://www.youtube.com/api/timedtext?lang=ko&v=7068mw-6lmI&name=Korean&tlang=lv
 
 //3wszM2SA12E
 //GUqwNany2ZA
 //7068mw-6lmI
-const videoId = "GUqwNany2ZA"; 
+const videoId = "7068mw-6lmI"; 
 export default class App extends Component{
 
   state = {
     quality: "",
     error: "",
-    status: "",
-    tracks: [],
-    subtitle: [],
-    currentCaption: ""
+    status: "", //youtube player status
+    tracks: [], //video tracks
+    subtitle: [], //video subtitle
+    currentCaption: "", //video current caption
   }
 
   async componentDidMount() {
     setInterval(async ()=>{
       let currentTime = await this.player.currentTime();
-      let caption = this.state.subtitle.slice().reverse().find(caption => caption.start <= currentTime);
+      let reversedSubtitle = this.state.subtitle.slice().reverse();
+      let caption = reversedSubtitle.find(caption => caption.start <= currentTime); // get current caption for current scene
       if(caption && caption.text != this.state.currentCaption){
         console.log(caption);
         this.setState({currentCaption: caption.text});
       }
-    }, 500);
+    }, 500); //update captions if needed every 500 ms
+    
     await this.getSubTitleTracks();
     await this.getSubTitle();
   }
 
+  //get subtitle tracks for the video.
   getSubTitleTracks = async () => {
     let xmlStr = await getText(`https://www.youtube.com/api/timedtext?type=list&v=${videoId}`);
     if(xmlStr){
@@ -62,6 +68,7 @@ export default class App extends Component{
     }
   }
 
+  //get subtitle for the video.
   getSubTitle = async () => {
     let enTrack = this.state.tracks.find(track=>track.lang_code=='en');
     if(enTrack){
