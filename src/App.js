@@ -7,7 +7,7 @@
  */
 
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View, Button} from 'react-native';
 import YouTube from 'react-native-youtube'
 import { find } from 'lodash';
 import {DOMParser} from 'xmldom';
@@ -24,7 +24,7 @@ import { getText } from './api';
 //3wszM2SA12E
 //GUqwNany2ZA
 //7068mw-6lmI
-const videoId = "7068mw-6lmI"; 
+const videoId = "3wszM2SA12E"; 
 export default class App extends Component{
 
   state = {
@@ -33,7 +33,9 @@ export default class App extends Component{
     status: "", //youtube player status
     tracks: [], //video tracks
     subtitle: [], //video subtitle
-    currentCaption: "", //video current caption
+    currentCaption: {}, //video current caption
+    showSubtitle: false,
+    play: true,
   }
 
   async componentDidMount() {
@@ -41,12 +43,11 @@ export default class App extends Component{
       let currentTime = await this.player.currentTime();
       let reversedSubtitle = this.state.subtitle.slice().reverse();
       let caption = reversedSubtitle.find(caption => caption.start <= currentTime); // get current caption for current scene
-      if(caption && caption.text != this.state.currentCaption){
+      if(caption && caption.start != this.state.currentCaption.start){
         console.log(caption);
-        this.setState({currentCaption: caption.text});
+        this.setState({currentCaption: caption, play: false, showSubtitle: false});
       }
-    }, 500); //update captions if needed every 500 ms
-    
+    }, 200); //update captions if needed every 500 ms
     await this.getSubTitleTracks();
     await this.getSubTitle();
   }
@@ -92,31 +93,45 @@ export default class App extends Component{
     }
   }
 
+  onPressedShowBtn = () => {
+    this.setState({showSubtitle: !this.state.showSubtitle})
+  }
+
   render() {
     return (
       <View style={styles.container}>
         <YouTube
           ref={ref => this.player = ref}
           apiKey="AIzaSyC3AVn96xa-TX-o2rWseNvfcQ09UCPhy80"
-          videoId={videoId}   // The YouTube video ID
-          play={true}             // control playback of video with true/false
+          videoId={videoId}       // The YouTube video ID
+          play={this.state.play}             // control playback of video with true/false
           fullscreen={false}      // control whether the video should play in fullscreen or inline
-          loop={true}             // control whether the video should loop when ended
+          loop={false}             // control whether the video should loop when ended
           onReady={e => this.setState({ isReady: true })}
           onChangeState={e => {
             console.log(e.state)
-            this.setState({ status: e.state });
+            if (e.state === 'playing') {
+              this.setState({status: e.state, play: true })
+            } else if (e.state === 'paused' || e.state === 'stopped' || e.state === 'ended') {
+              this.setState({status: e.state, play: false })
+            }
           }}
           onChangeQuality={e => this.setState({ quality: e.quality })}
           onError={e => this.setState({ error: e.error })}
           style={{ alignSelf: 'stretch', height: 300 }}
         />
-        <Text>
-          {this.state.status}
-        </Text>
-        <Text style={styles.caption}>
-          {this.state.currentCaption}
-        </Text>
+        <View style={styles.subtitleView}>
+          {this.state.showSubtitle ?
+            <Text style={styles.caption}>
+              {this.state.currentCaption.text}
+            </Text>
+            :
+            <Button 
+              title="Click here to show transcription" 
+              onPress={this.onPressedShowBtn}
+            />
+          }
+        </View>
       </View>
     );
   }
@@ -126,7 +141,6 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
@@ -147,5 +161,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#333333',
     marginBottom: 5,
+  },
+
+  subtitleView: {
+    marginVertical: 24,
   },
 });
