@@ -12,7 +12,7 @@ import YouTube from 'react-native-youtube'
 import { find } from 'lodash';
 import {DOMParser} from 'xmldom';
 import { xmlToJson } from './utils';
-import { getText } from './api';
+import api from './api';
 
 // Endpoint to get the subtitle tracks
 // https://www.youtube.com/api/timedtext?type=list&v=3wszM2SA12E
@@ -21,10 +21,19 @@ import { getText } from './api';
 // https://www.youtube.com/api/timedtext?lang=en&v=7068mw-6lmI&name=English&tlang=lv
 // https://www.youtube.com/api/timedtext?lang=ko&v=7068mw-6lmI&name=Korean&tlang=lv
 
+// http://www.youtube.com/watch?v=Ec0oP4OXMcM
+
 //3wszM2SA12E
-//GUqwNany2ZA
 //7068mw-6lmI
-const videoId = "3wszM2SA12E"; 
+//GUqwNany2ZA
+
+//qJlbPXZEpRE
+//JV7FMc8BW5U
+
+//Ec0oP4OXMcM
+const videoId = "Ec0oP4OXMcM"; 
+const targetLang = 'en';
+const nativeLang = 'ar';
 export default class App extends Component{
 
   state = {
@@ -32,69 +41,65 @@ export default class App extends Component{
     error: "",
     status: "", //youtube player status
     tracks: [], //video tracks
-    subtitle: [], //video subtitle
-    currentCaption: {}, //video current caption
-    showSubtitle: false,
+    targetSubtitles: [], //video subtitle
+    nativeSubtitles: [], //video subtitle
+    currentTargetSubtitle: {}, //transcription
+    currentNativeSubtitles: [], //translation
+    showTranscription: false,
+    showTranslation: false,
     play: true,
   }
 
   async componentDidMount() {
     setInterval(async ()=>{
+      if(!this.player) return;
       let currentTime = await this.player.currentTime();
-      let reversedSubtitle = this.state.subtitle.slice().reverse();
-      let caption = reversedSubtitle.find(caption => caption.start <= currentTime); // get current caption for current scene
-      if(caption && caption.start != this.state.currentCaption.start){
-        console.log(caption);
-        this.setState({currentCaption: caption, play: false, showSubtitle: false});
+      let reversedTargetSubtitles = this.state.targetSubtitles.slice().reverse();
+      let currentTargetSubtitle = reversedTargetSubtitles.find(subtitle => subtitle.start <= currentTime);
+      if(currentTargetSubtitle && currentTargetSubtitle.start != this.state.currentTargetSubtitle.start){
+        console.log(currentTargetSubtitle);
+        
+        let currentNativeSubtitles = [];
+        let targetStart = currentTargetSubtitle.start;
+        let targetEnd = currentTargetSubtitle.end;
+
+        let firstIndex = 0;
+        this.state.nativeSubtitles.forEach((subtitle, index)=>{
+          if(subtitle.start <= targetStart) firstIndex = index;
+        })
+
+        let lastIndex = this.state.nativeSubtitles.findIndex(subtitle => subtitle.end >= targetEnd);
+        console.log("indexes", firstIndex, lastIndex)
+        for(let i = firstIndex; i <= lastIndex; i ++){
+          currentNativeSubtitles.push(this.state.nativeSubtitles[i]);
+        }  
+
+        this.setState({currentTargetSubtitle, currentNativeSubtitles, play: false, showTranscription: false, showTranslation: false});
       }
-    }, 200); //update captions if needed every 500 ms
-    await this.getSubTitleTracks();
-    await this.getSubTitle();
+    }, 200); //update captions if needed every 200 ms
+
+    let targetSubtitles = await api.getSubtitlesFromYoutube(videoId, targetLang);
+    if(!targetSubtitles){
+      targetSubtitles = await api.getSubtitlesFromAmara(videoId, targetLang);
+    } 
+
+    let nativeSubtitles = await api.getSubtitlesFromYoutube(videoId, nativeLang);
+    if(!nativeSubtitles){
+      nativeSubtitles = await api.getSubtitlesFromAmara(videoId, nativeLang);
+    } 
+
+    this.setState({
+      targetSubtitles: targetSubtitles || [],
+      nativeSubtitles: nativeSubtitles || [], 
+    });
   }
 
-  //get subtitle tracks for the video.
-  getSubTitleTracks = async () => {
-    let xmlStr = await getText(`https://www.youtube.com/api/timedtext?type=list&v=${videoId}`);
-    if(xmlStr){
-      let parser = new DOMParser();
-      let xml = parser.parseFromString(xmlStr, "text/xml");
-      let json = xmlToJson(xml);
-      console.log('getSubTitleTracks json', json);
-      let _tracks = json.transcript_list.track instanceof Array ? json.transcript_list.track : [json.transcript_list.track]
-      let tracks = _tracks.map(track=>({
-          ...track["@attributes"]
-      }))
-      console.log(tracks);
-      this.setState({tracks});  
-    }
+  onPressedShowTranscription = () => {
+    this.setState({showTranscription: !this.state.showTranscription})
   }
 
-  //get subtitle for the video.
-  getSubTitle = async () => {
-    let enTrack = this.state.tracks.find(track=>track.lang_code=='en');
-    if(enTrack){
-      let xmlStr = await getText(`https://www.youtube.com/api/timedtext?lang=${enTrack.lang_code}&v=${videoId}&name=${enTrack.name}`);
-
-      if(xmlStr){
-        let parser = new DOMParser();
-        let xml = parser.parseFromString(xmlStr, "text/xml");
-        let json = xmlToJson(xml);
-        console.log(json);
-        let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
-        let subtitle = _texts.map(text => ({
-          ...text['@attributes'],
-          text: text['#text']
-        }));
-  
-        this.setState({subtitle});  
-      }  
-    }else{
-      alert("There is no caption English track for the video id");
-    }
-  }
-
-  onPressedShowBtn = () => {
-    this.setState({showSubtitle: !this.state.showSubtitle})
+  onPressedShowTranslation = () => {
+    this.setState({showTranslation: !this.state.showTranslation})
   }
 
   render() {
@@ -104,9 +109,9 @@ export default class App extends Component{
           ref={ref => this.player = ref}
           apiKey="AIzaSyC3AVn96xa-TX-o2rWseNvfcQ09UCPhy80"
           videoId={videoId}       // The YouTube video ID
-          play={this.state.play}             // control playback of video with true/false
+          play={this.state.play}  // control playback of video with true/false
           fullscreen={false}      // control whether the video should play in fullscreen or inline
-          loop={false}             // control whether the video should loop when ended
+          loop={false}            // control whether the video should loop when ended
           onReady={e => this.setState({ isReady: true })}
           onChangeState={e => {
             console.log(e.state)
@@ -121,16 +126,36 @@ export default class App extends Component{
           style={{ alignSelf: 'stretch', height: 300 }}
         />
         <View style={styles.subtitleView}>
-          {this.state.showSubtitle ?
-            <Text style={styles.caption}>
-              {this.state.currentCaption.text}
-            </Text>
-            :
-            <Button 
-              title="Click here to show transcription" 
-              onPress={this.onPressedShowBtn}
-            />
-          }
+          <View style={styles.transcription}>
+            {this.state.showTranscription ?
+              <View>
+                <Text style={styles.caption}>
+                  {this.state.currentTargetSubtitle.text}
+                </Text>
+              </View>
+              :
+              <Button 
+                title="Click here to show transcription" 
+                onPress={this.onPressedShowTranscription}
+              />
+            }
+          </View>
+          <View style={styles.translation}>
+            {this.state.showTranslation ?
+              <View>
+                {this.state.currentNativeSubtitles.map((subtitle, index)=>
+                  <Text style={styles.caption} key={index.toString()}>
+                    {subtitle.text}
+                  </Text>
+                )}
+              </View>
+              :
+              <Button 
+                title="Click here to show translation" 
+                onPress={this.onPressedShowTranslation}
+              />
+            }
+          </View>
         </View>
       </View>
     );
@@ -166,4 +191,12 @@ const styles = StyleSheet.create({
   subtitleView: {
     marginVertical: 24,
   },
+
+  transcription: {
+    marginBottom: 24,
+  },
+
+  translation: {
+    marginBottom: 24,
+  }
 });
