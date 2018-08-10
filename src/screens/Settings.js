@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
-import {RootStack} from './router'
+import {View} from 'react-native';
 
 export default class App extends Component{
   render(){
-    return <RootStack/>
+    return <View/>
   }
 }

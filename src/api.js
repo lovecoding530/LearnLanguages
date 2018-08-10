@@ -2,6 +2,20 @@ import {DOMParser} from 'xmldom';
 import { xmlToJson } from './utils';
 import _ from 'lodash';
 
+export const GOOGLE_API_KEY = "AIzaSyC3AVn96xa-TX-o2rWseNvfcQ09UCPhy80";
+const API_PLAYLISTS_IN_CHANNEL = "https://www.googleapis.com/youtube/v3/playlists/";
+const API_PLAYLISTITMES = "https://www.googleapis.com/youtube/v3/playlistItems";
+
+const maxResults = 20;
+
+function buildURL(url, parameters){
+    let query = Object.keys(parameters).map(function(key) {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]);
+    }).join("&");
+    let encodedUrl = url + "?" + query;
+    return encodedUrl;
+}
+
 async function getJSON(url, headers={}){
     try {
         let response = await fetch(url, {
@@ -59,7 +73,7 @@ async function getSubtitleTracksFromYoutube(videoId){
                     ...track, 
                     subtitles_uri: `https://www.youtube.com/api/timedtext?lang=${track.lang_code}&v=${videoId}&name=${track.name}`
                 }
-            })    
+            })
         }
     }
     console.log('getSubtitleTracksFromYoutube', tracks);
@@ -133,6 +147,43 @@ async function getSubtitlesFromAmara(videoId, langCode){
     return null
 }
 
+async function getChannelID(targetLang, nativeLang){
+    let url = 'https://demo1204964.mockable.io/channel';
+    let res = await getJSON(url);
+    if(res){
+        return res.channelId;
+    }
+    return null;
+}
+
+async function getPlaylistsInChannel(channelId, pageToken = ''){
+    let part = 'snippet,contentDetails';
+    let parameters = {
+        channelId,
+        part,
+        maxResults,
+        pageToken,
+        key: GOOGLE_API_KEY,
+    }
+    let url = buildURL(API_PLAYLISTS_IN_CHANNEL, parameters);
+    let res = await getJSON(url);
+    return res;
+}
+
+async function getPlaylistItemss(playlistId, pageToken = ''){
+    let part = 'snippet,contentDetails';
+    let parameters = {
+        playlistId,
+        part,
+        maxResults,
+        pageToken,
+        key: GOOGLE_API_KEY,
+    }
+    let url = buildURL(API_PLAYLISTITMES, parameters);
+    let res = await getJSON(url);
+    return res;
+}
+
 export default {
     getJSON,
     postJSON,
@@ -141,4 +192,7 @@ export default {
     getSubtitlesFromYoutube,
     getSubtitleTracksFromAmara,
     getSubtitlesFromAmara,
+    getChannelID,
+    getPlaylistsInChannel,
+    getPlaylistItemss,
 }
