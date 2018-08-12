@@ -29,8 +29,8 @@ import api, {GOOGLE_API_KEY} from '../api';
 
 //JV7FMc8BW5U
 const videoId = "Ec0oP4OXMcM"; 
-const targetLang = 'en';
-const nativeLang = 'es';
+const targetLang = 'es';
+const nativeLang = 'en';
 export default class Player extends Component{
 
   constructor(props){
@@ -93,7 +93,7 @@ export default class Player extends Component{
           this.setState({currentTargetSubtitle, currentNativeSubtitles, play: false, showTranscription: false, showTranslation: false});
         }
       }, 200); //update captions if needed every 200 ms  
-    }, 500)
+    }, 500);
 
     let targetSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, targetLang);
     if(!targetSubtitles){
