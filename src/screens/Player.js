@@ -66,34 +66,37 @@ export default class Player extends Component{
       // this.setState({active: false, play: false});
     });
 
-    setTimeout(()=>{
-      this.updateInterval = setInterval(async ()=>{
-        if(!this.player || !this.state.active) return;
+    this.updateInterval = setInterval(async ()=>{
+      if(!this.player || !this.state.active) return;
 
-        var currentTime = await this.player.currentTime();
-        let reversedTargetSubtitles = this.state.targetSubtitles.slice().reverse();
-        let currentTargetSubtitle = reversedTargetSubtitles.find(subtitle => subtitle.start <= currentTime);
-        if(currentTargetSubtitle && currentTargetSubtitle.start != this.state.currentTargetSubtitle.start){
-          console.log(currentTargetSubtitle);
-          
-          let currentNativeSubtitles = [];
-          let targetStart = currentTargetSubtitle.start;
-          let targetEnd = currentTargetSubtitle.end;
-  
-          let firstIndex = 0;
-          this.state.nativeSubtitles.forEach((subtitle, index)=>{
-            if(subtitle.start <= targetStart) firstIndex = index;
-          })
-  
-          let lastIndex = this.state.nativeSubtitles.findIndex(subtitle => subtitle.end >= targetEnd);
-          for(let i = firstIndex; i <= lastIndex; i ++){
-            currentNativeSubtitles.push(this.state.nativeSubtitles[i]);
-          }
-  
-          this.setState({currentTargetSubtitle, currentNativeSubtitles, play: false, showTranscription: false, showTranslation: false});
+      var currentTime = await this.player.currentTime();
+      currentTime = currentTime / 1000;
+
+      // console.log(currentTime);
+
+      let reversedTargetSubtitles = this.state.targetSubtitles.slice().reverse();
+      let currentTargetSubtitle = reversedTargetSubtitles.find(subtitle => subtitle.start <= currentTime);
+      if(currentTargetSubtitle && currentTargetSubtitle.start != this.state.currentTargetSubtitle.start){
+        console.log(currentTargetSubtitle);
+        
+        let currentNativeSubtitles = [];
+        let targetStart = currentTargetSubtitle.start;
+        let targetEnd = currentTargetSubtitle.end;
+
+        let firstIndex = 0;
+        this.state.nativeSubtitles.forEach((subtitle, index)=>{
+          if(subtitle.start <= targetStart) firstIndex = index;
+        })
+
+        let lastIndex = this.state.nativeSubtitles.findIndex(subtitle => subtitle.end >= targetEnd);
+        for(let i = firstIndex; i <= lastIndex; i ++){
+          currentNativeSubtitles.push(this.state.nativeSubtitles[i]);
         }
-      }, 200); //update captions if needed every 200 ms  
-    }, 500);
+
+        this.setState({currentTargetSubtitle, currentNativeSubtitles, play: false, showTranscription: false, showTranslation: false});
+        await this.player.seekTo(currentTargetSubtitle.start * 1000);
+      }
+    }, 200); //update captions if needed every 200 ms  
 
     let targetSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, targetLang);
     if(!targetSubtitles){
@@ -123,6 +126,16 @@ export default class Player extends Component{
     this.setState({showTranslation: !this.state.showTranslation})
   }
 
+  onChangeState = (e) => {
+    console.log(e.state)
+    if (e.state === 'playing') {
+      this.setState({status: e.state, play: true, showTranscription: false, showTranslation: false })
+    } else if (e.state === 'paused' || e.state === 'stopped' || e.state === 'ended') {
+      // console.log(e.state)
+      this.setState({status: e.state, play: false })
+    }
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -134,14 +147,7 @@ export default class Player extends Component{
           fullscreen={false}      // control whether the video should play in fullscreen or inline
           loop={false}            // control whether the video should loop when ended
           onReady={e => this.setState({ isReady: true })}
-          onChangeState={e => {
-            console.log(e.state)
-            if (e.state === 'playing') {
-              this.setState({status: e.state, play: true })
-            } else if (e.state === 'paused' || e.state === 'stopped' || e.state === 'ended') {
-              this.setState({status: e.state, play: false })
-            }
-          }}
+          onChangeState={this.onChangeState}
           onChangeQuality={e => this.setState({ quality: e.quality })}
           onError={e => this.setState({ error: e.error })}
           style={{ alignSelf: 'stretch', height: 300 }}
