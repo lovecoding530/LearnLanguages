@@ -154,6 +154,7 @@ android {
 }
 
 dependencies {
+    compile project(':react-native-video')
     compile project(':react-native-i18n')
     compile project(':react-native-youtube')
     compile fileTree(dir: "libs", include: ["*.jar"])

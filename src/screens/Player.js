@@ -52,6 +52,7 @@ export default class Player extends Component{
       showTranslation: false,
       play: true,
       active: true,
+      isReady: false,
     }
   }
 
@@ -67,7 +68,7 @@ export default class Player extends Component{
     });
 
     this.updateInterval = setInterval(async ()=>{
-      if(!this.player || !this.state.active) return;
+      if(!this.player || !this.state.isReady) return;
 
       var currentTime = await this.player.currentTime();
       currentTime = currentTime / 1000;

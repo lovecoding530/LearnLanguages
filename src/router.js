@@ -9,6 +9,7 @@ import Player from './screens/Player'
 
 import { strings } from "./i18n";
 import store from "./store";
+import TestPlayer from './screens/TestPlayer';
 
 const BrowseStack = createStackNavigator({
     PlayLists: { 
@@ -59,7 +60,7 @@ export const RootStack = createStackNavigator(
         screen: TabNav,
       },
       Player: {
-        screen: Player,
+        screen: TestPlayer,
       },
     },
     {

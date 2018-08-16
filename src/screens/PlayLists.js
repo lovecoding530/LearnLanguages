@@ -29,7 +29,7 @@ export default class PlayLists extends Component {
         navigate('VideoList', {playlistId: item.id})
     }
 
-    render(){
+    render(){ 
         return (
             <View style={{flex: 1}}>
                 <FlatList

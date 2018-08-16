@@ -48,7 +48,21 @@ function copy(o) {
   return output;
 }
 
+function qsToJson(qs) {
+  var res = {};
+  var pars = qs.split('&');
+  var kv, k, v;
+  for (i in pars) {
+    kv = pars[i].split('=');
+    k = kv[0];
+    v = kv[1];
+    res[k] = decodeURIComponent(v);
+  }
+  return res;
+}
+
 export {
   copy,
-  xmlToJson
+  xmlToJson,
+  qsToJson
 }

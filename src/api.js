@@ -1,10 +1,11 @@
 import {DOMParser} from 'xmldom';
-import { xmlToJson } from './utils';
+import { xmlToJson, qsToJson } from './utils';
 import _ from 'lodash';
 
 export const GOOGLE_API_KEY = "AIzaSyC3AVn96xa-TX-o2rWseNvfcQ09UCPhy80";
 const API_PLAYLISTS_IN_CHANNEL = "https://www.googleapis.com/youtube/v3/playlists/";
 const API_PLAYLISTITMES = "https://www.googleapis.com/youtube/v3/playlistItems";
+const API_GET_VIDEO_INFO = "http://www.youtube.com/get_video_info"
 
 const maxResults = 20;
 
@@ -91,7 +92,8 @@ async function getSubtitlesFromYoutube(videoId, langCode) {
             let xml = parser.parseFromString(xmlStr, "text/xml");
             let json = xmlToJson(xml);
             let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
-            let subtitles = _texts.map(text => ({
+            let subtitles = _texts.map((text, index) => ({
+                index,
                 start: parseFloat(text["@attributes"].start),
                 dur: parseFloat(text["@attributes"].dur),
                 end: parseFloat(text["@attributes"].start) + parseFloat(text["@attributes"].dur),
@@ -135,8 +137,9 @@ async function getSubtitlesFromAmara(videoId, langCode){
         let res = await getJSON(trackForLangCode.subtitles_uri);
         console.log("Amara subtitles new", res);
         if(res && res.subtitles){
-            let subtitles = res.subtitles.map(subtitle=>({
+            let subtitles = res.subtitles.map((subtitle, index)=>({
                 ...subtitle,
+                index,
                 start: subtitle.start / 1000,
                 end: subtitle.end / 1000,
                 dur: (subtitle.end-subtitle.start) / 1000,
@@ -184,6 +187,28 @@ async function getPlaylistItemss(playlistId, pageToken = ''){
     return res;
 }
 
+async function getYoutubeVideoInfo(video_id){
+    let url = buildURL(API_GET_VIDEO_INFO, {video_id});
+    let res = await getText(url);
+    let videoInfo = qsToJson(res);
+    var tmp = videoInfo.url_encoded_fmt_stream_map;
+    if (tmp) {
+      tmp = tmp.split(',');
+      for (i in tmp) {
+        tmp[i] = qsToJson(tmp[i]);
+      }
+      videoInfo.url_encoded_fmt_stream_map = tmp;
+    }
+    return videoInfo;
+}
+
+async function getYoutubeVideoDownloadUrl(video_id){
+    let videoInfo = await getYoutubeVideoInfo(video_id);
+    let videos = videoInfo.url_encoded_fmt_stream_map;
+    let mp4 = videos.find(video=>video.itag==18);
+    return mp4.url;
+}
+
 export default {
     getJSON,
     postJSON,
@@ -195,4 +220,6 @@ export default {
     getChannelID,
     getPlaylistsInChannel,
     getPlaylistItemss,
+    getYoutubeVideoInfo,
+    getYoutubeVideoDownloadUrl
 }
