@@ -5,27 +5,70 @@ import { createStackNavigator, createBottomTabNavigator } from 'react-navigation
 import PlayLists from './screens/PlayLists'
 import VideoList from './screens/VideoList'
 import Settings from './screens/Settings'
-import Player from './screens/Player'
+import History from './screens/History';
+import YoutubePlayer from './screens/YoutubePlayer'
+import NativePlayer from './screens/NativePlayer';
+import AutoTranslate from './screens/History';
 
 import { strings } from "./i18n";
 import store from "./store";
-import TestPlayer from './screens/TestPlayer';
 
-const BrowseStack = createStackNavigator({
+const HumanPlayLists = (props) => {
+    return (
+        <PlayLists human {...props}/>
+    )
+}
+
+const AutoPlayLists = (props) => {
+    return (
+        <PlayLists auto {...props}/>
+    )
+}
+
+const HumanStack = createStackNavigator({
     PlayLists: { 
-        screen: PlayLists,
+        screen: HumanPlayLists,
         navigationOptions: {
             header: null,
         }
     },
-    VideoList: { screen: VideoList },
-    // Player: { screen: Player },
-}, {
-    // headerMode: 'none',
+    VideoList: {
+        screen: VideoList, 
+    },
 });
 
+HumanStack.navigationOptions = ({ navigation }) => {
+    let tabBarVisible = navigation.state.index == 0;
+  
+    return {
+        tabBarVisible,
+    };
+};
+
+const AutoStack = createStackNavigator({
+    PlayLists: { 
+        screen: AutoPlayLists,
+        navigationOptions: {
+            header: null,
+        }
+    },
+    VideoList: {
+        screen: VideoList, 
+    },
+});
+
+AutoStack.navigationOptions = ({ navigation }) => {
+    let tabBarVisible = navigation.state.index == 0;
+  
+    return {
+        tabBarVisible,
+    };
+};
+
 const TabNav =  createBottomTabNavigator({
-    Browse: BrowseStack,
+    HumanTranslation: HumanStack,
+    AutoTranslation: AutoStack,
+    History: History,
     Settings: Settings,
 }, {
     navigationOptions: ({ navigation }) => ({
@@ -35,7 +78,7 @@ const TabNav =  createBottomTabNavigator({
                 <Text 
                     style={{
                         textAlign: 'center', 
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: 'bold', 
                         color: tintColor
                     }}
@@ -56,12 +99,8 @@ const TabNav =  createBottomTabNavigator({
 
 export const RootStack = createStackNavigator(
     {
-      MainTab: {
-        screen: TabNav,
-      },
-      Player: {
-        screen: TestPlayer,
-      },
+        MainTab: { screen: TabNav },
+        Player: { screen: NativePlayer },
     },
     {
       mode: 'modal',

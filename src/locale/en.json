@@ -2,5 +2,8 @@
     "Hello": "Hello",
     "Welcome": "Welcome",
     "Browse": "Browse",
-    "Settings": "Settings"
+    "Settings": "Settings",
+    "History": "History",
+    "HumanTranslation": "Human Translation",
+    "AutoTranslation": "Auto Translation"
 }

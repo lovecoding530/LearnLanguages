@@ -1,44 +1,40 @@
 import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
-import api from '../api';
+import appdata from '../appdata';
 
-export default class PlayLists extends Component {
-    state = {
-        playLists: [], 
-        channelId: 'UC_x5XG1OV2P6uZZ5FSM9Ttw',
-        humanChannelId: "UCxbq9z7XbThxhIxx2dyWSMg",
-        autoChannelId: "UC8XwOvmFVdImmPSaJF-OUew",
-        nextPageToken: "", 
+export default class History extends Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            videos: [], 
+        }    
     }
 
     async componentDidMount() {
-        // let channelId = await api.getChannelID(); 
-        // this.setState({channelId});
-        let channelId = (this.props.human) ? this.state.humanChannelId : this.state.autoChannelId;
-
-        let playLists = await api.getPlaylistsInChannel(channelId);
-        this.setState({playLists: playLists.items, nextPageToken: playLists.nextPageToken});
-    }
-
-    onEndReached = async () => {
-        if(!this.state.nextPageToken) return;
-        let playLists = await api.getPlaylistsInChannel(this.state.channelId, this.state.nextPageToken);
-        this.setState({playLists: [...this.state.playLists, ...playLists.items], nextPageToken: playLists.nextPageToken});                
+        let videos = await appdata.getHistoryVideos();
+        this.setState({videos});
+        this.props.navigation.addListener('willFocus', async (route) => { 
+            let videos = await appdata.getHistoryVideos();
+            this.setState({videos});
+        });
     }
 
     onPressItem = (item) => {
-        let {navigation: {navigate}, human, auto} = this.props;
-        navigate('VideoList', {playlistId: item.id, human, auto})
+        let {navigate} = this.props.navigation;
+        navigate('Player', {videoId: item.contentDetails.videoId})
     }
 
-    render(){ 
+    render(){
         return (
             <View style={{flex: 1}}>
                 <FlatList
-                    contentContainerStyle={styles.FlatList}
-                    data={this.state.playLists}
+                    contentContainerStyle={styles.flatList}
+                    data={this.state.videos}
                     renderItem={({item, index})=>{
-                        let thumbnailUrl = Object.values(item.snippet.thumbnails)[0].url
+                        
+                        let thumbnailUrl = (item.snippet.thumbnails) ? 
+                                           Object.values(item.snippet.thumbnails)[0].url : 
+                                           "https://facebook.github.io/react-native/docs/assets/favicon.png";
                         return (
                             <TouchableOpacity style={styles.item} onPress={()=>this.onPressItem(item)}>
                                 <Image
@@ -62,7 +58,7 @@ export default class PlayLists extends Component {
 }
 
 const styles = StyleSheet.create({
-    FlatList: {
+    flatList: {
         paddingVertical: 4,
     },
 
@@ -74,16 +70,16 @@ const styles = StyleSheet.create({
     },
 
     title: {
-        fontSize: 20,        
+        fontSize: 18,        
     },
 
     detail: {
-        fontSize: 18,
+        fontSize: 16,
     },
 
     titleView: {
         flex: 1,
-        marginLeft: 8,
+        marginHorizontal: 8,
     }
 });
   

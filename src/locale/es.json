@@ -1,6 +1,9 @@
 {
-    "Hello": "Hello",
-    "Welcome": "Welcome",
+    "Hello": "Hello ES",
+    "Welcome": "Welcome ES",
     "Browse": "Browse ES",
-    "Settings": "Settings ES"
+    "Settings": "Settings ES",
+    "History": "History ES",
+    "HumanTranslation": "Human Translation Es",
+    "AutoTranslation": "Auto Translation Es"
 }

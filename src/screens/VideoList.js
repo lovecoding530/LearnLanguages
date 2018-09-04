@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
 import api from '../api';
+import appdata from '../appdata';
 
 export default class VideoList extends Component {
     constructor(props){
@@ -15,20 +16,19 @@ export default class VideoList extends Component {
 
     async componentDidMount() {
         let playlistItems = await api.getPlaylistItemss(this.state.playlistId);
-        console.log(playlistItems);
         this.setState({videos: playlistItems.items, nextPageToken: playlistItems.nextPageToken});
     }
 
     onEndReached = async ()=>{
-        console.log("onEndReached");
         if(!this.state.nextPageToken) return;
         let playlistItems = await api.getPlaylistItemss(this.state.playlistId, this.state.nextPageToken);
         this.setState({videos: [...this.state.videos, ...playlistItems.items], nextPageToken: playlistItems.nextPageToken});                
     }
 
-    onPressItem = (item) => {
-        let {navigate} = this.props.navigation;
-        navigate('Player', {videoId: item.contentDetails.videoId})
+    onPressItem = async (item) => {
+        await appdata.addHistoryVideo(item);
+        let {navigate, state: {params: {human, auto}}} = this.props.navigation;
+        navigate('Player', {videoId: item.contentDetails.videoId, human, auto});
     }
 
     render(){
@@ -65,6 +65,7 @@ export default class VideoList extends Component {
 }
 
 const styles = StyleSheet.create({
+    
     flatList: {
         paddingVertical: 4,
     },
@@ -77,11 +78,11 @@ const styles = StyleSheet.create({
     },
 
     title: {
-        fontSize: 20,        
+        fontSize: 18,        
     },
 
     detail: {
-        fontSize: 18,
+        fontSize: 16,
     },
 
     titleView: {

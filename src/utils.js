@@ -1,3 +1,5 @@
+import {DOMParser} from 'xmldom';
+
 function xmlToJson(xml) {
   // Create the return object
   var obj = {};
@@ -56,13 +58,31 @@ function qsToJson(qs) {
     kv = pars[i].split('=');
     k = kv[0];
     v = kv[1];
+    v = v.replace(/\+/g, '%20'); 
     res[k] = decodeURIComponent(v);
   }
   return res;
 }
 
+function timeStringFromSeconds(seconds){
+  var date = new Date(null);
+  date.setSeconds(seconds); // specify value for SECONDS here
+  var timeString = date.toISOString().substr(11, 8);
+  if(timeString.startsWith("00:"))
+    timeString = timeString.substr(3);
+  return timeString;
+}
+
+function strip(html){
+  html = '<span>' + html + '</span>';
+  var doc = (new DOMParser()).parseFromString(html, 'text/html');
+  return doc.documentElement.textContent || "";
+}
+
 export {
   copy,
   xmlToJson,
-  qsToJson
+  qsToJson,
+  timeStringFromSeconds,
+  strip,
 }

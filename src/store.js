@@ -7,7 +7,8 @@ class Store {
         return Store.instance;
     }
 
-    currentTab = "Browse";
+    sharedVideoId = "";
+    navigator = null;
 }
 
 let store = new Store();

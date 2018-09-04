@@ -36,10 +36,11 @@ export default class Player extends Component{
   constructor(props){
     super(props);
 
-    let {state: {params: {videoId}}} = this.props.navigation;
+    let {state: {params: {videoItem}}} = this.props.navigation;
 
     this.state = {
-      videoId,
+      videoId: videoItem.contentDetails.videoId,
+      videoTitle: videoItem.snippet.title,
       quality: "",
       error: "",
       status: "", //youtube player status

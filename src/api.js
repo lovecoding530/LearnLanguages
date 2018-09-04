@@ -3,9 +3,19 @@ import { xmlToJson, qsToJson } from './utils';
 import _ from 'lodash';
 
 export const GOOGLE_API_KEY = "AIzaSyC3AVn96xa-TX-o2rWseNvfcQ09UCPhy80";
+
+// Endpoint to get the subtitle tracks
+// https://www.youtube.com/api/timedtext?type=list&v=3wszM2SA12E
+
+// Endpoint to get the subtitle for video id and support translate
+// https://www.youtube.com/api/timedtext?lang=en&v=7068mw-6lmI&name=English&tlang=lv
+// https://www.youtube.com/api/timedtext?lang=ko&v=7068mw-6lmI&name=Korean&tlang=lv
+
 const API_PLAYLISTS_IN_CHANNEL = "https://www.googleapis.com/youtube/v3/playlists/";
 const API_PLAYLISTITMES = "https://www.googleapis.com/youtube/v3/playlistItems";
-const API_GET_VIDEO_INFO = "http://www.youtube.com/get_video_info"
+const API_VIDEOS = "https://www.googleapis.com/youtube/v3/videos";
+const API_GET_VIDEO_INFO = "http://www.youtube.com/get_video_info";
+const API_DICTIONARY = "https://glosbe.com/gapi/translate";
 
 const maxResults = 20;
 
@@ -52,12 +62,14 @@ async function postJSON(url, json) {
             },
             body: JSON.stringify(json),
         });
-        let responseJson = await response.json() ;
+        let responseJson = await response.json();
         return responseJson;
     } catch (error) {
         console.log("error", error);
     }
 }
+
+//==========unused===========================
 
 async function getSubtitleTracksFromYoutube(videoId){
     let tracks = [];
@@ -77,15 +89,85 @@ async function getSubtitleTracksFromYoutube(videoId){
             })
         }
     }
-    console.log('getSubtitleTracksFromYoutube', tracks);
     return tracks;
 }
 
 async function getSubtitlesFromYoutube(videoId, langCode) {
     let tracks = await getSubtitleTracksFromYoutube(videoId);
-    let trackForLangCode = tracks.find(track=>track.lang_code == langCode);
+    let trackForLangCode = tracks.find(track=>track.lang_code.startsWith(langCode));
     if(trackForLangCode){
         let xmlStr = await getText(trackForLangCode.subtitles_uri);
+
+        if(xmlStr){
+            let parser = new DOMParser();
+            let xml = parser.parseFromString(xmlStr, "text/xml");
+            let json = xmlToJson(xml);
+            let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
+            let subtitles = _texts.map((text, index) => ({
+                index,
+                start: parseFloat(text["@attributes"].start),
+                dur: parseFloat(text["@attributes"].dur),
+                end: parseFloat(text["@attributes"].start) + parseFloat(text["@attributes"].dur),
+                text: text['#text'],
+            }));
+
+            return subtitles;
+        }
+    }
+    return null
+}
+
+//================================================
+
+async function getSubtitleTracksFromYoutubeVideoInfo(videoInfo){
+    let _tracks = [];
+    if(videoInfo.player_response.captions){
+        _tracks = videoInfo.player_response.captions.playerCaptionsTracklistRenderer.captionTracks;
+    }
+    let tracks = _tracks.map(track=>{
+        return {
+            ...track,
+            lang_code: track.languageCode,
+            subtitles_uri: track.baseUrl
+        }
+    })
+    return tracks;
+}
+
+async function getSubtitlesFromYoutubeVideoInfo(videoInfo, langCode, isAsr) {
+    let tracks = await getSubtitleTracksFromYoutubeVideoInfo(videoInfo);
+    let trackForLangCode = tracks.find(track=>(
+        track.lang_code.startsWith(langCode) 
+        && 
+        (isAsr ? (track.kind=='asr') : (track.kind!='asr')))
+    );
+    if(trackForLangCode){
+        let xmlStr = await getText(trackForLangCode.subtitles_uri);
+
+        if(xmlStr){
+            let parser = new DOMParser();
+            let xml = parser.parseFromString(xmlStr, "text/xml");
+            let json = xmlToJson(xml);
+            let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
+            let subtitles = _texts.map((text, index) => ({
+                index,
+                start: parseFloat(text["@attributes"].start),
+                dur: parseFloat(text["@attributes"].dur),
+                end: parseFloat(text["@attributes"].start) + parseFloat(text["@attributes"].dur),
+                text: text['#text'],
+            }));
+
+            return subtitles;
+        }
+    }
+    return null
+}
+
+async function getAutoSubtitlesFromYoutubeVideoInfo(videoInfo, langCode) {
+    let tracks = await getSubtitleTracksFromYoutubeVideoInfo(videoInfo);
+    let firstTrack = tracks[0];
+    if(firstTrack){
+        let xmlStr = await getText(firstTrack.subtitles_uri + "&tlang=" + langCode);
 
         if(xmlStr){
             let parser = new DOMParser();
@@ -126,16 +208,14 @@ async function getSubtitleTracksFromAmara(videoId){
             tracks = _.reject(tracks, {published: false})
         }
     }
-    console.log('getSubtitleTracksFromAmara', tracks);
     return tracks;
 }
 
 async function getSubtitlesFromAmara(videoId, langCode){
     let tracks = await getSubtitleTracksFromAmara(videoId);
-    let trackForLangCode = tracks.find(track=>track.code == langCode);
+    let trackForLangCode = tracks.find(track=>track.code.startsWith(langCode));
     if(trackForLangCode){
         let res = await getJSON(trackForLangCode.subtitles_uri);
-        console.log("Amara subtitles new", res);
         if(res && res.subtitles){
             let subtitles = res.subtitles.map((subtitle, index)=>({
                 ...subtitle,
@@ -187,6 +267,23 @@ async function getPlaylistItemss(playlistId, pageToken = ''){
     return res;
 }
 
+async function getVideoItemById(id){
+    let part = 'snippet,contentDetails';
+    let parameters = {
+        id,
+        part,
+        key: GOOGLE_API_KEY,
+    }
+    let url = buildURL(API_VIDEOS, parameters);
+    let res = await getJSON(url);
+
+    if(res && res.items){
+        return res.items[0];
+    }else{
+        return null;
+    }    
+}
+
 async function getYoutubeVideoInfo(video_id){
     let url = buildURL(API_GET_VIDEO_INFO, {video_id});
     let res = await getText(url);
@@ -199,6 +296,7 @@ async function getYoutubeVideoInfo(video_id){
       }
       videoInfo.url_encoded_fmt_stream_map = tmp;
     }
+    videoInfo.player_response = JSON.parse(videoInfo.player_response);
     return videoInfo;
 }
 
@@ -209,17 +307,39 @@ async function getYoutubeVideoDownloadUrl(video_id){
     return mp4.url;
 }
 
+async function getYoutubeVideoDownloadUrlFromVideoInfo(videoInfo){
+    let videos = videoInfo.url_encoded_fmt_stream_map;
+    let mp4 = videos.find(video=>video.itag==18);
+    return mp4.url;
+}
+
+async function getDictionaryData(from, dest, phrase){
+    let url = buildURL(API_DICTIONARY, {from, dest, phrase, format: 'json', pretty: true, tm: true});
+    let res = await getJSON(url);
+    return res;
+}
+
 export default {
     getJSON,
     postJSON,
     getText,
+
     getSubtitleTracksFromYoutube,
     getSubtitlesFromYoutube,
+    getSubtitleTracksFromYoutubeVideoInfo,
+    getSubtitlesFromYoutubeVideoInfo,
+    getAutoSubtitlesFromYoutubeVideoInfo,
+
     getSubtitleTracksFromAmara,
     getSubtitlesFromAmara,
     getChannelID,
     getPlaylistsInChannel,
     getPlaylistItemss,
+    getVideoItemById,
+
     getYoutubeVideoInfo,
-    getYoutubeVideoDownloadUrl
+    getYoutubeVideoDownloadUrl,
+    getYoutubeVideoDownloadUrlFromVideoInfo,
+    
+    getDictionaryData
 }
