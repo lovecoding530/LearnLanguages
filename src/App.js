@@ -9,7 +9,7 @@ export default class App extends Component{
   async componentDidMount() {
     let sharedVideoUrl = this.props.videoUrl || "";
     let sharedVideoId = sharedVideoUrl.split("/").pop();
-    console.log("sharedVideoId", sharedVideoId);
+
     if(sharedVideoId){
       const navigateAction = NavigationActions.navigate({
         routeName: 'Player',

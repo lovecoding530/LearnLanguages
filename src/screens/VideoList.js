@@ -1,9 +1,16 @@
 import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
+import ListItem from "../components/ListItem";
 import api from '../api';
-import appdata from '../appdata';
+import appdata, {FAV_ICON} from '../appdata';
 
 export default class VideoList extends Component {
+    static navigationOptions = ({ navigation }) => {
+        return {
+            headerTitle: <Text style={{fontSize: 20, fontWeight: 'bold'}}>{navigation.getParam('playlistTitle')}</Text>
+        };
+    };
+    
     constructor(props){
         super(props);
         let {state: {params: {playlistId}}} = this.props.navigation;
@@ -38,21 +45,14 @@ export default class VideoList extends Component {
                     contentContainerStyle={styles.flatList}
                     data={this.state.videos}
                     renderItem={({item, index})=>{
-                        
-                        let thumbnailUrl = (item.snippet.thumbnails) ? 
-                                           Object.values(item.snippet.thumbnails)[0].url : 
-                                           "https://facebook.github.io/react-native/docs/assets/favicon.png";
+                        let thumbnailUrl = (item.snippet.thumbnails) ? Object.values(item.snippet.thumbnails)[0].url : FAV_ICON;
                         return (
-                            <TouchableOpacity style={styles.item} onPress={()=>this.onPressItem(item)}>
-                                <Image
-                                    style={{width: 120, height: 90, resizeMode: 'cover'}}
-                                    source={{uri: thumbnailUrl}}
-                                />
-                                <View style={styles.titleView}>
-                                    <Text style={styles.title}>{item.snippet.title}</Text>
-                                    <Text style={styles.detail}>{item.snippet.channelTitle}</Text>
-                                </View>
-                            </TouchableOpacity>
+                            <ListItem
+                                thumbnailUrl={thumbnailUrl}
+                                title={item.snippet.title} 
+                                detail={item.snippet.channelTitle} 
+                                onPress={()=>this.onPressItem(item)}
+                            />
                         )
                     }}
                     keyExtractor={(item, index) => index.toString()}
@@ -69,25 +69,5 @@ const styles = StyleSheet.create({
     flatList: {
         paddingVertical: 4,
     },
-
-    item: {
-        flex: 1,
-        flexDirection: 'row',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-    },
-
-    title: {
-        fontSize: 18,        
-    },
-
-    detail: {
-        fontSize: 16,
-    },
-
-    titleView: {
-        flex: 1,
-        marginHorizontal: 8,
-    }
 });
   

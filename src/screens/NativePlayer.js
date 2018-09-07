@@ -84,12 +84,14 @@ export default class Player extends Component{
       reviewMode: false,
       flaggedScenes: [],
       currentReviewScene: -1,
+      isDraggingSlide: false,
     };
   }
 
   async componentDidMount() {
     let videoInfo = await api.getYoutubeVideoInfo(this.state.videoId);
     let videoUrl = await api.getYoutubeVideoDownloadUrlFromVideoInfo(videoInfo);
+    console.log('videoUrl', videoUrl);
 
     var targetSubtitles = await api.getSubtitlesFromYoutubeVideoInfo(videoInfo, targetLang, false);
     if(!targetSubtitles){
@@ -162,11 +164,15 @@ export default class Player extends Component{
       let targetStart = targetSubtitle.start;
       let targetEnd = targetSubtitle.end;
   
-      let firstIndex = this.state.nativeSubtitles.findIndex(subtitle => subtitle.end >= targetStart);
-  
-      let lastIndex = this.state.nativeSubtitles.findIndex(subtitle => subtitle.end >= targetEnd);
-      for(let i = firstIndex; i <= lastIndex; i ++){
-        nativeSubtitles.push(this.state.nativeSubtitles[i]);
+      let first = this.state.nativeSubtitles.find(subtitle => (subtitle.end - targetStart) > 0.25);
+      
+      let reversedSubtitles = this.state.nativeSubtitles.slice().reverse();
+      let last = reversedSubtitles.find(subtitle => (subtitle.start - targetEnd) < -0.25);
+
+      if(first && last){
+        for(let i = first.index; i <= last.index; i ++){
+          nativeSubtitles.push(this.state.nativeSubtitles[i]);
+        }
       }
     }
     return nativeSubtitles;
@@ -175,9 +181,10 @@ export default class Player extends Component{
   onProgress = (e)=>{
     var currentTime = e.currentTime;
 
-    this.setState({
-      currentTime
-    });
+    if(!this.state.isDraggingSlide){
+      this.setState({currentTime});
+    }
+
     if(this.state.playAll){
       let currentTargetSubtitle = this.state.targetSubtitles.find(subtitle=>subtitle.end>=currentTime);
       let currentNativeSubtitles = this.getNativeSubtitlesForTarget(currentTargetSubtitle);
@@ -264,12 +271,20 @@ export default class Player extends Component{
   }
 
   onSlidingComplete = (value) => {
+    console.log("onSlidingComplete", value)
+
     if(this.state.playAll){
       this.player.seek(value);
     }else{
       let currentTargetSubtitleIndex = this.state.targetSubtitles.findIndex(subtitle=>subtitle.end > value);
       this.toScene(currentTargetSubtitleIndex);
     }
+    this.setState({isDraggingSlide: false});
+  }
+
+  onSlideValueChange = (value) => {
+    console.log("onSlideValueChange", value)
+    this.setState({isDraggingSlide: true, currentTime: value});
   }
 
   onModeSwitchChanged = (value) => {
@@ -335,17 +350,14 @@ export default class Player extends Component{
   }
 
   onDragStartPanel = (position) => {
-    console.log(position);
     this.setState({isDraggingPanel: true, pannelPosition: position});
   }
 
   onDragPanel = (position) => {
-    console.log(position);
     // this.setState({isDraggingPanel: true, pannelPosition: position});
   }
 
   onDragEndPanel = (position) => {
-    console.log(position);
     this.setState({isDraggingPanel: false, pannelPosition: position});
   }
 
@@ -427,7 +439,7 @@ export default class Player extends Component{
               {(!this.state.play || this.state.showButtons) &&
               <View style={styles.playerOverlay}>
                 <View style={styles.playerTopBar}>
-                  <Text numberOfLines={1} style={{color: '#fff'}}>{this.state.videoTitle}</Text>
+                  <Text numberOfLines={1} style={{color: '#fff', paddingVertical: 4,}}>{this.state.videoTitle}</Text>
                   <View style={styles.settingsBar}>
                     <TouchableOpacity 
                       onPress={this.onToggleReviewMode}>
@@ -464,11 +476,17 @@ export default class Player extends Component{
                 {this.state.playAll ?
                   <View style={styles.playallButtons}>
                     {this.state.play ?
-                      <TouchableOpacity onPress={this.onPause}>
+                      <TouchableOpacity 
+                        onPress={this.onPause}
+                        style={styles.playerButton}
+                      >
                         <Icon name="pause" size={30} color='#fff'/>
                       </TouchableOpacity>                  
                       :
-                      <TouchableOpacity onPress={this.onPlay}>
+                      <TouchableOpacity 
+                        onPress={this.onPlay}
+                        style={styles.playerButton}
+                      >
                         <Icon name="play" size={30} color='#fff'/>
                       </TouchableOpacity>
                     }
@@ -478,15 +496,20 @@ export default class Player extends Component{
                     <TouchableOpacity 
                       onPress={this.onPrev}
                       disabled={this.state.currentTargetSubtitle.index == 0}
+                      style={styles.playerButton}
                     >
                       <Icon name="step-backward" size={30} color='#fff'/>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={this.onReplay}>
+                    <TouchableOpacity 
+                      onPress={this.onReplay}
+                      style={styles.playerButton}
+                    >
                       <Icon name="undo-alt" size={30} color='#fff'/>
                     </TouchableOpacity>
                     <TouchableOpacity 
                       onPress={this.onNext}
                       disabled={this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1}
+                      style={styles.playerButton}
                     >
                       <Icon name="step-forward" size={30} color='#fff'/>
                     </TouchableOpacity>
@@ -498,6 +521,7 @@ export default class Player extends Component{
                     <Slider 
                       style={styles.playerSlider}
                       onSlidingComplete={this.onSlidingComplete}
+                      onValueChange={this.onSlideValueChange}
                       maximumValue={this.state.duration}
                       minimumValue={0}
                       value={this.state.currentTime}
@@ -533,7 +557,7 @@ export default class Player extends Component{
                     {currentTargetSubtitleText}
                   </ParsedText>
                   <TouchableOpacity 
-                    style={{position: 'absolute', top: 0, right: 0}}
+                    style={{position: 'absolute', top: 0, right: 0, padding: 8,}}
                     onPress={this.onToggleFlag}>
                     {isFlagged ? 
                       <Icon name="flag" size={20} color='red' solid/>
@@ -555,7 +579,7 @@ export default class Player extends Component{
                   {this.state.currentNativeSubtitles.map((subtitle, index)=>
                     <ParsedText
                       key={index.toString()}
-                      style={styles.caption}
+                      style={[styles.caption, {color: '#4682b4'}]}
                       parse={
                         [
                           {pattern: /[^\s-&+,:;=?@#|'<>.^*()%!\\]+/, style: styles.parsedText, onPress: this.onPressNativeWord},
@@ -650,7 +674,8 @@ const styles = {
   caption: {
     fontSize: 17,
     textAlign: 'center',
-    margin: 4,
+    marginHorizontal: 8,
+    marginTop: 8,
   },
 
   instructions: {
@@ -660,7 +685,6 @@ const styles = {
   },
 
   subtitleView: {
-    margin: 8,
   },
 
   targetSubtitleView: {
@@ -668,7 +692,6 @@ const styles = {
   },
 
   transcription: {
-    marginVertical: 4,
     zIndex: -1,
   },
 
@@ -696,7 +719,7 @@ const styles = {
   },
 
   playerButton: {
-    margin: 16,
+    padding: 8,
   },
 
   buttons: {
@@ -733,7 +756,7 @@ const styles = {
     position: 'absolute',
     top: 0,
     width: '100%',
-    padding: 8
+    paddingHorizontal: 8,
   },
 
   settingsBar: {

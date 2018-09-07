@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
-import appdata from '../appdata';
+import ListItem from "../components/ListItem";
+import appdata, {FAV_ICON} from '../appdata';
 
 export default class History extends Component {
     constructor(props){
@@ -31,21 +32,14 @@ export default class History extends Component {
                     contentContainerStyle={styles.flatList}
                     data={this.state.videos}
                     renderItem={({item, index})=>{
-                        
-                        let thumbnailUrl = (item.snippet.thumbnails) ? 
-                                           Object.values(item.snippet.thumbnails)[0].url : 
-                                           "https://facebook.github.io/react-native/docs/assets/favicon.png";
+                        let thumbnailUrl = (item.snippet.thumbnails) ? Object.values(item.snippet.thumbnails)[0].url : FAV_ICON;
                         return (
-                            <TouchableOpacity style={styles.item} onPress={()=>this.onPressItem(item)}>
-                                <Image
-                                    style={{width: 120, height: 90, resizeMode: 'cover'}}
-                                    source={{uri: thumbnailUrl}}
-                                />
-                                <View style={styles.titleView}>
-                                    <Text style={styles.title}>{item.snippet.title}</Text>
-                                    <Text style={styles.detail}>{item.snippet.channelTitle}</Text>
-                                </View>
-                            </TouchableOpacity>
+                            <ListItem
+                                thumbnailUrl={thumbnailUrl}
+                                title={item.snippet.title} 
+                                detail={item.snippet.channelTitle} 
+                                onPress={()=>this.onPressItem(item)}
+                            />
                         )
                     }}
                     keyExtractor={(item, index) => index.toString()}

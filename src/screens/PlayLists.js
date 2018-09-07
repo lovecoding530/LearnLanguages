@@ -1,6 +1,9 @@
 import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
+import ListItem from "../components/ListItem";
 import api from '../api';
+import {FAV_ICON} from '../appdata';
+import { strings } from '../i18n';
 
 export default class PlayLists extends Component {
     state = {
@@ -12,9 +15,9 @@ export default class PlayLists extends Component {
     }
 
     async componentDidMount() {
-        // let channelId = await api.getChannelID(); 
-        // this.setState({channelId});
         let channelId = (this.props.human) ? this.state.humanChannelId : this.state.autoChannelId;
+        // let channelId = await api.getChannelID(); 
+        this.setState({channelId});
 
         let playLists = await api.getPlaylistsInChannel(channelId);
         this.setState({playLists: playLists.items, nextPageToken: playLists.nextPageToken});
@@ -28,28 +31,32 @@ export default class PlayLists extends Component {
 
     onPressItem = (item) => {
         let {navigation: {navigate}, human, auto} = this.props;
-        navigate('VideoList', {playlistId: item.id, human, auto})
+        navigate('VideoList', {playlistId: item.id, playlistTitle: item.snippet.title, human, auto})
     }
 
     render(){ 
         return (
             <View style={{flex: 1}}>
+                <View style={{ padding: 16, elevation: 2, backgroundColor: '#fff' }}>
+                    <Text style={{fontSize: 20, fontWeight: 'bold'}}>{strings('Scene by Scene - Spanish')}</Text>
+                </View>
                 <FlatList
                     contentContainerStyle={styles.FlatList}
                     data={this.state.playLists}
                     renderItem={({item, index})=>{
-                        let thumbnailUrl = Object.values(item.snippet.thumbnails)[0].url
+                        let thumbnailUrl = (item.snippet.thumbnails) ? Object.values(item.snippet.thumbnails)[0].url : FAV_ICON;
                         return (
-                            <TouchableOpacity style={styles.item} onPress={()=>this.onPressItem(item)}>
-                                <Image
-                                    style={{width: 120, height: 90, resizeMode: 'cover'}}
-                                    source={{uri: thumbnailUrl}}
-                                />
-                                <View style={styles.titleView}>
-                                    <Text style={styles.title}>{item.snippet.title}</Text>
-                                    <Text style={styles.detail}>{item.snippet.channelTitle}</Text>
-                                </View>
-                            </TouchableOpacity>
+                            <ListItem
+                                thumbnailUrl={thumbnailUrl}
+                                title={item.snippet.title} 
+                                detail={item.snippet.channelTitle}
+                                onPress={()=>this.onPressItem(item)}
+                                styles={{
+                                    title: {
+                                        fontSize: 20,
+                                    },
+                                }}
+                            />
                         )
                     }}
                     keyExtractor={(item, index) => index.toString()}
@@ -65,25 +72,5 @@ const styles = StyleSheet.create({
     FlatList: {
         paddingVertical: 4,
     },
-
-    item: {
-        flex: 1,
-        flexDirection: 'row',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-    },
-
-    title: {
-        fontSize: 20,        
-    },
-
-    detail: {
-        fontSize: 18,
-    },
-
-    titleView: {
-        flex: 1,
-        marginLeft: 8,
-    }
 });
   

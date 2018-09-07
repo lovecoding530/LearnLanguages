@@ -69,7 +69,7 @@ const TabNav =  createBottomTabNavigator({
     HumanTranslation: HumanStack,
     AutoTranslation: AutoStack,
     History: History,
-    Settings: Settings,
+    // Settings: Settings,
 }, {
     navigationOptions: ({ navigation }) => ({
         tabBarLabel: ({ focused, tintColor }) => {

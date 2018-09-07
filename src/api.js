@@ -1,6 +1,7 @@
 import {DOMParser} from 'xmldom';
 import { xmlToJson, qsToJson } from './utils';
 import _ from 'lodash';
+import qs from 'qs';
 
 export const GOOGLE_API_KEY = "AIzaSyC3AVn96xa-TX-o2rWseNvfcQ09UCPhy80";
 
@@ -107,7 +108,7 @@ async function getSubtitlesFromYoutube(videoId, langCode) {
                 index,
                 start: parseFloat(text["@attributes"].start),
                 dur: parseFloat(text["@attributes"].dur),
-                end: parseFloat(text["@attributes"].start) + parseFloat(text["@attributes"].dur),
+                end: (parseFloat(text["@attributes"].start) * 1000 + parseFloat(text["@attributes"].dur) * 1000) / 1000,
                 text: text['#text'],
             }));
 
@@ -153,7 +154,7 @@ async function getSubtitlesFromYoutubeVideoInfo(videoInfo, langCode, isAsr) {
                 index,
                 start: parseFloat(text["@attributes"].start),
                 dur: parseFloat(text["@attributes"].dur),
-                end: parseFloat(text["@attributes"].start) + parseFloat(text["@attributes"].dur),
+                end: (parseFloat(text["@attributes"].start) * 1000 + parseFloat(text["@attributes"].dur) * 1000) / 1000,
                 text: text['#text'],
             }));
 
@@ -165,7 +166,7 @@ async function getSubtitlesFromYoutubeVideoInfo(videoInfo, langCode, isAsr) {
 
 async function getAutoSubtitlesFromYoutubeVideoInfo(videoInfo, langCode) {
     let tracks = await getSubtitleTracksFromYoutubeVideoInfo(videoInfo);
-    let firstTrack = tracks[0];
+    let firstTrack = tracks.find(track=>track.kind!='asr');
     if(firstTrack){
         let xmlStr = await getText(firstTrack.subtitles_uri + "&tlang=" + langCode);
 
@@ -178,7 +179,7 @@ async function getAutoSubtitlesFromYoutubeVideoInfo(videoInfo, langCode) {
                 index,
                 start: parseFloat(text["@attributes"].start),
                 dur: parseFloat(text["@attributes"].dur),
-                end: parseFloat(text["@attributes"].start) + parseFloat(text["@attributes"].dur),
+                end: (parseFloat(text["@attributes"].start) * 1000 + parseFloat(text["@attributes"].dur) * 1000) / 1000,
                 text: text['#text'],
             }));
 
@@ -285,32 +286,118 @@ async function getVideoItemById(id){
 }
 
 async function getYoutubeVideoInfo(video_id){
-    let url = buildURL(API_GET_VIDEO_INFO, {video_id});
+    let el='detailpage';
+    let url = buildURL(API_GET_VIDEO_INFO, {video_id, el});
     let res = await getText(url);
-    let videoInfo = qsToJson(res);
+
+    let videoInfo = qs.parse(res);
     var tmp = videoInfo.url_encoded_fmt_stream_map;
     if (tmp) {
       tmp = tmp.split(',');
       for (i in tmp) {
-        tmp[i] = qsToJson(tmp[i]);
+        tmp[i] = qs.parse(tmp[i]);
       }
       videoInfo.url_encoded_fmt_stream_map = tmp;
     }
+    videoInfo.adaptive_fmts = qs.parse(videoInfo.adaptive_fmts)
     videoInfo.player_response = JSON.parse(videoInfo.player_response);
+
     return videoInfo;
 }
 
 async function getYoutubeVideoDownloadUrl(video_id){
+    let downloadUrl = "";
     let videoInfo = await getYoutubeVideoInfo(video_id);
     let videos = videoInfo.url_encoded_fmt_stream_map;
-    let mp4 = videos.find(video=>video.itag==18);
-    return mp4.url;
+    if(videos){
+        let mp4 = videos.find(video=>video.itag==18);
+        downloadUrl = mp4.url;
+        if(mp4.s){
+            let signature = await getDeciperSignature2(videoInfo.video_id, mp4.s);
+            downloadUrl = `${downloadUrl}&signature=${signature}`;
+        }
+    }
+    return downloadUrl;
 }
 
 async function getYoutubeVideoDownloadUrlFromVideoInfo(videoInfo){
+    let downloadUrl = "";
     let videos = videoInfo.url_encoded_fmt_stream_map;
-    let mp4 = videos.find(video=>video.itag==18);
-    return mp4.url;
+    if(videos){
+        let mp4 = videos.find(video=>video.itag==18);
+        downloadUrl = mp4.url;
+        if(mp4.s){
+            let signature = await getDeciperSignature2(videoInfo.video_id, mp4.s);
+            downloadUrl = `${downloadUrl}&signature=${signature}`;
+        }
+    }
+    return downloadUrl;
+}
+
+async function getDeciperSignature1(videoId, signature) {
+    var url = `https://www.youtube.com/embed/${videoId}?disable_polymer=true&hl=en`;
+    let page = await getText(url);
+
+    let configStr = /'PLAYER_CONFIG':\s(.*?),'EXPERIMENT_FLAGS/.exec(page)[1];
+    let json = JSON.parse(configStr);
+    let playerSourceUrl = `https://www.youtube.com${json.assets.js}`;
+    console.log(videoId, playerSourceUrl);
+
+    let playerSource = await getText(playerSourceUrl);
+    let decipherFuncName = /"signature",\s?([a-zA-Z0-9\$]+)\(/.exec(playerSource)[1];
+
+    let decipherFuncRegex = new RegExp(`(?!h\\.)${decipherFuncName}=function\\(\\w+\\)\\{(.*?)\\}`);
+    let decipherFunc = decipherFuncRegex.exec(playerSource)[0];
+
+    let functionsObjectName = /\.split\(""\);(\w+)\./.exec(decipherFunc)[1];
+    let functionsObjectRegex = `var\\s${functionsObjectName}=\\{(.|\n)*?\\}\\};`;
+    let functionsObject = new RegExp(functionsObjectRegex).exec(playerSource)[0];
+
+    eval(functionsObject);
+    eval(decipherFunc);
+    let result = eval(decipherFuncName)(signature);
+
+    console.log({
+        playerSourceUrl,
+        signature,
+        decipherFunc,
+        functionsObject,
+        result,
+    });
+
+    return result;
+}
+
+async function getDeciperSignature2(videoId, signature) {
+    var url = `https://www.youtube.com/embed/${videoId}?disable_polymer=true&hl=en`;
+    let page = await getText(url);
+
+    let configStr = /'PLAYER_CONFIG':\s(.*?),'EXPERIMENT_FLAGS/.exec(page)[1];
+    let json = JSON.parse(configStr);
+    let playerSourceUrl = `https://www.youtube.com${json.assets.js}`;
+
+    let playerSource = await getText(playerSourceUrl);
+
+    let decipherFuncArr = /function\(\w+\)\{.*split\(""\);(\w+)\..*join\(""\)\};/.exec(playerSource);
+    let decipherFunc = decipherFuncArr[0];
+
+    let functionsObjectName = decipherFuncArr[1];
+    let functionsObjectRegex = `var\\s${functionsObjectName}=\\{(.|\n)*?\\}\\};`;
+    let functionsObject = new RegExp(functionsObjectRegex).exec(playerSource)[0];
+
+    eval(functionsObject);
+    eval(`decipher=${decipherFunc}`)
+    let result = decipher(signature);
+
+    console.log({
+        playerSourceUrl,
+        signature,
+        decipherFunc,
+        functionsObject,
+        result,
+    });
+
+    return result;
 }
 
 async function getDictionaryData(from, dest, phrase){
@@ -340,6 +427,8 @@ export default {
     getYoutubeVideoInfo,
     getYoutubeVideoDownloadUrl,
     getYoutubeVideoDownloadUrlFromVideoInfo,
+    getDeciperSignature1,
+    getDeciperSignature2,
     
     getDictionaryData
 }
