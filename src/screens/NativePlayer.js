@@ -332,6 +332,7 @@ export default class Player extends Component{
     let dest = (from == targetLang) ? nativeLang : targetLang;
     let dictionaryData = await api.getDictionaryData(from, dest, this.state.searchWord);
     this.setState({dictionaryData});
+    this.dictionaryLiat.scrollToOffset({offset: 0});
   }
 
   onFocusSearch = () => {
@@ -354,7 +355,9 @@ export default class Player extends Component{
   }
 
   onDragPanel = (position) => {
+
     // this.setState({isDraggingPanel: true, pannelPosition: position});
+
   }
 
   onDragEndPanel = (position) => {
@@ -633,6 +636,7 @@ export default class Player extends Component{
               </View>
               {dicExamples &&
                 <FlatList
+                  ref={ref=>this.dictionaryLiat=ref}
                   style={styles.dictionaryList}
                   data={dicExamples.slice(0, 10)}
                   keyExtractor={(item, index)=>index.toString()}

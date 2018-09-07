@@ -386,7 +386,7 @@ async function getDeciperSignature2(videoId, signature) {
     let functionsObject = new RegExp(functionsObjectRegex).exec(playerSource)[0];
 
     eval(functionsObject);
-    eval(`decipher=${decipherFunc}`)
+    eval(`decipher=${decipherFunc}`);
     let result = decipher(signature);
 
     console.log({
