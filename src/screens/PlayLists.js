@@ -1,8 +1,7 @@
 import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
-import ListItem from "../components/ListItem";
+import PlayListItem from "../components/PlayListItem";
 import api from '../api';
-import {FAV_ICON} from '../appdata';
 import { strings } from '../i18n';
 
 export default class PlayLists extends Component {
@@ -37,28 +36,19 @@ export default class PlayLists extends Component {
     render(){ 
         return (
             <View style={{flex: 1}}>
-                <View style={{ padding: 16, elevation: 2, backgroundColor: '#fff' }}>
-                    <Text style={{fontSize: 20, fontWeight: 'bold'}}>{strings('Scene by Scene - Spanish')}</Text>
+                <View style={styles.nav}>
+                    <Image source={require('../assets/logo.png')} style={styles.navIcon}/>
+                    <Text style={styles.navTitle}>{strings('Scene by Scene - Spanish')}</Text>
                 </View>
                 <FlatList
                     contentContainerStyle={styles.FlatList}
                     data={this.state.playLists}
-                    renderItem={({item, index})=>{
-                        let thumbnailUrl = (item.snippet.thumbnails) ? Object.values(item.snippet.thumbnails)[0].url : FAV_ICON;
-                        return (
-                            <ListItem
-                                thumbnailUrl={thumbnailUrl}
-                                title={item.snippet.title} 
-                                detail={item.snippet.channelTitle}
-                                onPress={()=>this.onPressItem(item)}
-                                styles={{
-                                    title: {
-                                        fontSize: 20,
-                                    },
-                                }}
-                            />
-                        )
-                    }}
+                    renderItem={({item, index})=>(
+                        <PlayListItem
+                            item={item}
+                            onPress={()=>this.onPressItem(item)}
+                        />
+                    )}
                     keyExtractor={(item, index) => index.toString()}
                     onEndReachedThreshold={0.1}
                     onEndReached={this.onEndReached}
@@ -72,5 +62,24 @@ const styles = StyleSheet.create({
     FlatList: {
         paddingVertical: 4,
     },
+
+    nav: {
+        padding: 12, 
+        elevation: 2, 
+        backgroundColor: '#fff', 
+        flexDirection: 'row', 
+        alignItems: 'center'
+    },
+
+    navIcon: {
+        width: 32, 
+        height: 32,
+        marginRight: 8
+    },
+
+    navTitle: {
+        fontSize: 20, 
+        fontWeight: 'bold'
+    }
 });
   

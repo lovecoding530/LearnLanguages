@@ -18,7 +18,7 @@ const API_VIDEOS = "https://www.googleapis.com/youtube/v3/videos";
 const API_GET_VIDEO_INFO = "http://www.youtube.com/get_video_info";
 const API_DICTIONARY = "https://glosbe.com/gapi/translate";
 
-const maxResults = 20;
+const maxResults = 50;
 
 function buildURL(url, parameters){
     let query = Object.keys(parameters).map(function(key) {
@@ -254,7 +254,7 @@ async function getPlaylistsInChannel(channelId, pageToken = ''){
     return res;
 }
 
-async function getPlaylistItemss(playlistId, pageToken = ''){
+async function getVideoItemsInPlaylist(playlistId, pageToken = ''){
     let part = 'snippet,contentDetails';
     let parameters = {
         playlistId,
@@ -265,24 +265,29 @@ async function getPlaylistItemss(playlistId, pageToken = ''){
     }
     let url = buildURL(API_PLAYLISTITMES, parameters);
     let res = await getJSON(url);
-    return res;
+
+    let videoIds = "";
+    if(res && res.items){
+        videoIds = res.items.map(item=>{
+            return item.contentDetails.videoId
+        }).join(',');
+    }
+    let videosRes = await getVideoItemsByIds(videoIds);
+    videosRes.nextPageToken = res.nextPageToken;
+    return videosRes;
 }
 
-async function getVideoItemById(id){
+async function getVideoItemsByIds(ids){
     let part = 'snippet,contentDetails';
     let parameters = {
-        id,
+        id: ids,
         part,
+        maxResults,
         key: GOOGLE_API_KEY,
     }
     let url = buildURL(API_VIDEOS, parameters);
     let res = await getJSON(url);
-
-    if(res && res.items){
-        return res.items[0];
-    }else{
-        return null;
-    }    
+    return res;
 }
 
 async function getYoutubeVideoInfo(video_id){
@@ -341,7 +346,6 @@ async function getDeciperSignature1(videoId, signature) {
     let configStr = /'PLAYER_CONFIG':\s(.*?),'EXPERIMENT_FLAGS/.exec(page)[1];
     let json = JSON.parse(configStr);
     let playerSourceUrl = `https://www.youtube.com${json.assets.js}`;
-    console.log(videoId, playerSourceUrl);
 
     let playerSource = await getText(playerSourceUrl);
     let decipherFuncName = /"signature",\s?([a-zA-Z0-9\$]+)\(/.exec(playerSource)[1];
@@ -421,8 +425,8 @@ export default {
     getSubtitlesFromAmara,
     getChannelID,
     getPlaylistsInChannel,
-    getPlaylistItemss,
-    getVideoItemById,
+    getVideoItemsInPlaylist,
+    getVideoItemsByIds,
 
     getYoutubeVideoInfo,
     getYoutubeVideoDownloadUrl,

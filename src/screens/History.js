@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
-import ListItem from "../components/ListItem";
+import VideoListItem from "../components/VideoListItem";
 import appdata, {FAV_ICON} from '../appdata';
 
 export default class History extends Component {
@@ -8,7 +8,7 @@ export default class History extends Component {
         super(props);
         this.state = {
             videos: [], 
-        }    
+        }
     }
 
     async componentDidMount() {
@@ -22,7 +22,7 @@ export default class History extends Component {
 
     onPressItem = (item) => {
         let {navigate} = this.props.navigation;
-        navigate('Player', {videoId: item.contentDetails.videoId})
+        navigate('Player', {videoId: item.id, currentTime: item.currentTime})
     }
 
     render(){
@@ -31,17 +31,12 @@ export default class History extends Component {
                 <FlatList
                     contentContainerStyle={styles.flatList}
                     data={this.state.videos}
-                    renderItem={({item, index})=>{
-                        let thumbnailUrl = (item.snippet.thumbnails) ? Object.values(item.snippet.thumbnails)[0].url : FAV_ICON;
-                        return (
-                            <ListItem
-                                thumbnailUrl={thumbnailUrl}
-                                title={item.snippet.title} 
-                                detail={item.snippet.channelTitle} 
-                                onPress={()=>this.onPressItem(item)}
-                            />
-                        )
-                    }}
+                    renderItem={({item, index})=>(
+                        <VideoListItem
+                            item={item}
+                            onPress={()=>this.onPressItem(item)}
+                        />
+                    )}
                     keyExtractor={(item, index) => index.toString()}
                     onEndReachedThreshold={0.1}
                     onEndReached={this.onEndReached}

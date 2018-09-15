@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
 import {Text, View, Image, TouchableOpacity} from 'react-native';
+import {FAV_ICON} from '../appdata';
 
 export default ListItem = (props) => {
-    let {thumbnailUrl, title, detail, onPress, styles: pStyles} = props;
-    pStyles = pStyles || {};
+    let {item, onPress} = props;
+    let thumbnailUrl = (item.snippet.thumbnails) ? Object.values(item.snippet.thumbnails)[0].url : FAV_ICON;
     return (
         <TouchableOpacity style={styles.item} onPress={onPress}>
             <Image
@@ -11,8 +12,8 @@ export default ListItem = (props) => {
                 source={{uri: thumbnailUrl}}
             />
             <View style={styles.titleView}>
-                <Text style={[styles.title, pStyles.title]}>{title}</Text>
-                <Text style={styles.detail} numberOfLines={3}>{detail}</Text>
+                <Text style={styles.title} numberOfLines={3}>{item.snippet.title}</Text>
+                <Text style={styles.detail} numberOfLines={3}>{item.snippet.channelTitle}</Text>
             </View>
         </TouchableOpacity>
     )
@@ -33,7 +34,7 @@ const styles = {
     },
 
     title: {
-        fontSize: 18,        
+        fontSize: 20,        
     },
 
     detail: {

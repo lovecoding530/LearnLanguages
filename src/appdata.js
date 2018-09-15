@@ -35,6 +35,25 @@ async function addHistoryVideo(videoItem){
     await setItem('history', historyVideos);
 }
 
+async function getCurrentTimeForHistoryVideo(videoId){
+    let historyVideos = await getHistoryVideos();
+    let videoItem = historyVideos.find((item)=>item.contentDetails.videoId==videoId);
+    if(videoItem){
+        return videoItem.currentTime;
+    }else{
+        return 0;
+    }
+}
+
+async function setCurrentTimeForHistoryVideo(videoId, currentTime){
+    let historyVideos = await getHistoryVideos();
+    let videoItem = historyVideos.find((item)=>item.contentDetails.videoId==videoId);
+    if(videoItem){
+        videoItem.currentTime = currentTime;
+    }
+    await setItem('history', historyVideos);
+}
+
 async function getFlaggedScenes(videoId){
     let key = `flagged-scenes-${videoId}`;
     let flaggedScenes = await getItem(key);
@@ -68,6 +87,8 @@ export default {
     setItem, 
     getHistoryVideos,
     addHistoryVideo,
+    getCurrentTimeForHistoryVideo,
+    setCurrentTimeForHistoryVideo,
     getFlaggedScenes,
     setFlaggedScenes,
     addFlaggedScene,

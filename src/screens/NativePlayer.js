@@ -23,8 +23,8 @@ import {
   KeyboardAvoidingView,
   FlatList,
   Image,
+  AppState,
 } from 'react-native';
-import YouTube from 'react-native-youtube'
 import api, {GOOGLE_API_KEY} from '../api';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/dist/FontAwesome5';
@@ -33,19 +33,24 @@ import ParsedText from 'react-native-parsed-text';
 import SlidingUpPanel from 'rn-sliding-up-panel'
 import HTML from 'react-native-render-html';
 import appdata from '../appdata';
-import {DOMParser} from 'xmldom';
+import MySwitch from "../components/MySwitch";
+import SelectSubModal from './SelectSubModal'
 
 const videoId = "kw2OFJeRIZ8"; 
 const targetLang = 'es';
 const nativeLang = 'en';
 const {width, height} = Dimensions.get('window')
 
+const PANEL_HEADER_HEIGHT = 48;
+const PANEL_BOTTOM = PANEL_HEADER_HEIGHT + 22;
+
 export default class Player extends Component{
 
   constructor(props){
     super(props);
 
-    let {state: {params: {videoId, human, auto, shared}}} = this.props.navigation;
+    let {state: {params: {videoId, human, auto, shared, currentTime}}} = this.props.navigation;
+    currentTime = currentTime || 0;
 
     this.state = {
       human, 
@@ -64,12 +69,12 @@ export default class Player extends Component{
       currentNativeSubtitles: [], //translation
       showTranscription: true,
       showTranslation: true,
-      play: false,
+      play: true,
       isReady: true,
       duration: 0,
       videoSize: {width: width, height: width * ( 9 / 16)},
-      currentTime: 0,
-      playAll: true,
+      currentTime,
+      playAll: false,
       normalSpeed: true,
       showButtons: false,
       searchWord: '',
@@ -77,14 +82,16 @@ export default class Player extends Component{
       allowDragging: true,
       searchLang: targetLang,
       isLoaded: false,
-      pannelBottom: 80,
-      pannelPosition: 80,
+      panelBottom: PANEL_BOTTOM,
+      panelPosition: PANEL_BOTTOM,
       isDraggingPanel: false,
       isKeyboardOpen: false,
       reviewMode: false,
       flaggedScenes: [],
       currentReviewScene: -1,
       isDraggingSlide: false,
+      appState: AppState.currentState,
+      panelTop: height,
     };
   }
 
@@ -140,22 +147,38 @@ export default class Player extends Component{
 
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow);
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide);
+    AppState.addEventListener('change', this._handleAppStateChange);
   }
 
   componentWillUnmount() {
     if(this.keyboardDidShowListener) this.keyboardDidShowListener.remove();
     if(this.keyboardDidHideListener) this.keyboardDidHideListener.remove();
+    AppState.removeEventListener('change', this._handleAppStateChange);
+    appdata.setCurrentTimeForHistoryVideo(this.state.videoId, this.state.currentTime);
   }
 
   _keyboardDidShow = (e) => {
-    this.setState({isKeyboardOpen: true, pannelPosition: height});
+    this.setState({isKeyboardOpen: true, panelTop: height, panelPosition: height});
     if(this.slidingUpPanel){
       this.slidingUpPanel.transitionTo(height);
     }
   }
 
   _keyboardDidHide = (e) => {
-    this.setState({isKeyboardOpen: false});
+    let panelTop = height - this.state.videoSize.height;
+    this.slidingUpPanel.transitionTo(panelTop);
+    this.setState({isKeyboardOpen: false, panelTop});
+  }
+
+  _handleAppStateChange = (nextAppState) => {
+    if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
+      console.log('App has come to the foreground!')
+      this.setState({play: true});
+    }else{
+      console.log('App has come to the background!')
+      this.setState({play: false});
+    }
+    this.setState({appState: nextAppState});
   }
 
   getNativeSubtitlesForTarget(targetSubtitle){
@@ -163,7 +186,7 @@ export default class Player extends Component{
     if(targetSubtitle){
       let targetStart = targetSubtitle.start;
       let targetEnd = targetSubtitle.end;
-  
+      
       let first = this.state.nativeSubtitles.find(subtitle => (subtitle.end - targetStart) > 0.25);
       
       let reversedSubtitles = this.state.nativeSubtitles.slice().reverse();
@@ -188,7 +211,7 @@ export default class Player extends Component{
     if(this.state.playAll){
       let currentTargetSubtitle = this.state.targetSubtitles.find(subtitle=>subtitle.end>=currentTime);
       let currentNativeSubtitles = this.getNativeSubtitlesForTarget(currentTargetSubtitle);
-  
+      
       this.setState({
         currentTargetSubtitle: currentTargetSubtitle || {},
         currentNativeSubtitles,
@@ -208,7 +231,7 @@ export default class Player extends Component{
     this.setState({showTranslation: !this.state.showTranslation})
   }
 
-  toScene = (sceneIndex) => {
+  toSceneIndex = (sceneIndex) => {
     if(sceneIndex < 0) return;
 
     let targetSubtitle = this.state.targetSubtitles[sceneIndex];
@@ -224,15 +247,20 @@ export default class Player extends Component{
     });
   }
 
+  toSceneTime = (time) => {
+    let sceneIndex = this.state.targetSubtitles.findIndex(subtitle=>subtitle.end > time);
+    this.toSceneIndex(sceneIndex);
+  }
+
   onPrev = () => {
     if(this.state.reviewMode){
       if(this.state.currentReviewScene == 0) return;
       let reviewScene = this.state.currentReviewScene - 1;
-      this.toScene(this.state.flaggedScenes[reviewScene]);
+      this.toSceneIndex(this.state.flaggedScenes[reviewScene]);
       this.setState({currentReviewScene: reviewScene})
     }else{
       if(this.state.currentTargetSubtitle.index == 0) return;
-      this.toScene(this.state.currentTargetSubtitle.index - 1);
+      this.toSceneIndex(this.state.currentTargetSubtitle.index - 1);
     }
   }
 
@@ -240,11 +268,11 @@ export default class Player extends Component{
     if(this.state.reviewMode){
       if(this.state.currentReviewScene == this.state.flaggedScenes.length - 1) return;
       let reviewScene = this.state.currentReviewScene + 1;
-      this.toScene(this.state.flaggedScenes[reviewScene]);
+      this.toSceneIndex(this.state.flaggedScenes[reviewScene]);
       this.setState({currentReviewScene: reviewScene})
     }else{
       if(this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1) return;
-      this.toScene(this.state.currentTargetSubtitle.index + 1);      
+      this.toSceneIndex(this.state.currentTargetSubtitle.index + 1);      
     }
   }
 
@@ -254,7 +282,7 @@ export default class Player extends Component{
   }
 
   onPlay = () => {
-    this.setState({play: true});
+    this.setState({play: true, showButtons: false});
   }
 
   onPause = () => {
@@ -264,43 +292,49 @@ export default class Player extends Component{
   onLoad = (e) => {
     let {duration, naturalSize} = e;
     let videoHeight = naturalSize.height * (width / naturalSize.width)
-    this.setState({isLoaded: true, duration, videoSize: {width, height: videoHeight}});
+    this.setState({isLoaded: true, duration, videoSize: {width, height: videoHeight}, panelTop: height - videoHeight});
     if(this.state.playAll == false){
-      this.player.seek(this.state.currentTargetSubtitle.start);
+      if(this.state.currentTime > 0) {
+        this.toSceneTime(this.state.currentTime);
+      }else{
+        this.player.seek(this.state.currentTargetSubtitle.start);
+      }
     }
   }
 
   onSlidingComplete = (value) => {
-    console.log("onSlidingComplete", value)
-
     if(this.state.playAll){
       this.player.seek(value);
     }else{
-      let currentTargetSubtitleIndex = this.state.targetSubtitles.findIndex(subtitle=>subtitle.end > value);
-      this.toScene(currentTargetSubtitleIndex);
+      this.toSceneTime(value);
     }
     this.setState({isDraggingSlide: false});
   }
 
   onSlideValueChange = (value) => {
-    console.log("onSlideValueChange", value)
     this.setState({isDraggingSlide: true, currentTime: value});
   }
 
   onModeSwitchChanged = (value) => {
     this.setState({
-      playAll: value,
+      playAll: value === 2,
       showTranscription: true, 
       showTranslation: true,
     });
   }
 
   onSpeedSwitchChanged = (value) => {
-    this.setState({normalSpeed: value});    
+    this.setState({normalSpeed: value === 2});
   }
 
   onPressPlayer = () => {
-    this.setState({showButtons: !this.state.showButtons})
+    if(this.state.playAll){
+      this.setState({showButtons: !this.state.showButtons});
+    }else{
+      if(this.state.currentTime < this.state.currentTargetSubtitle.end){
+        this.setState({play: !this.state.play});
+      }
+    }
   }
 
   onPressTargetWord = async (word) => {
@@ -324,7 +358,9 @@ export default class Player extends Component{
   }
 
   onToggleSearchLang = () => {
-    this.setState({searchLang: (this.state.searchLang == targetLang) ? nativeLang : targetLang});
+    let searchLang = (this.state.searchLang == targetLang) ? nativeLang : targetLang;
+    console.log(searchLang);
+    this.setState({searchLang});
   }
 
   search = async () => {
@@ -342,26 +378,24 @@ export default class Player extends Component{
     if(!this.state.videoUrl) return;
     let {nativeEvent: { layout}} = e;
     let endY = layout.y + layout.height + 20;
-    let pannelBottom = height - endY;
-    this.setState({pannelBottom, pannelPosition: pannelBottom}, ()=>{
+    let panelBottom = height - endY;
+    this.setState({panelBottom, panelPosition: panelBottom}, ()=>{
       if(this.slidingUpPanel && this.state.isLoaded && !this.state.isKeyboardOpen){
-        this.slidingUpPanel.transitionTo(pannelBottom);
+        this.slidingUpPanel.transitionTo(panelBottom);
       }
     });
   }
 
   onDragStartPanel = (position) => {
-    this.setState({isDraggingPanel: true, pannelPosition: position});
+    this.setState({isDraggingPanel: true, panelPosition: position});
   }
 
   onDragPanel = (position) => {
-
-    // this.setState({isDraggingPanel: true, pannelPosition: position});
-
+    // this.setState({isDraggingPanel: true, panelPosition: position});
   }
 
   onDragEndPanel = (position) => {
-    this.setState({isDraggingPanel: false, pannelPosition: position});
+    this.setState({isDraggingPanel: false, panelPosition: position});
   }
 
   onToggleReviewMode = () => {
@@ -370,7 +404,7 @@ export default class Player extends Component{
     this.setState({reviewMode, playAll});
     if(reviewMode){
       if(this.state.flaggedScenes.length == 0) return;
-      this.toScene(this.state.flaggedScenes[0]);
+      this.toSceneIndex(this.state.flaggedScenes[0]);
     }
   }
 
@@ -388,6 +422,20 @@ export default class Player extends Component{
       flaggedScenes,
       currentReviewScene: (flaggedScenes.length > 0) ? 0 : -1
     });
+  }
+
+  onBack5 = () => {
+    let back5 = this.state.currentTime - 5;
+    if(back5 < 0) back5 = 0;
+    this.player.seek(back5);
+    this.setState({play: true});
+  }
+
+  onForward5 = () => {
+    let forward5 = this.state.currentTime + 5;
+    if(forward5 > this.state.duration) forward5 = duration;
+    this.player.seek(forward5);
+    this.setState({play: true});
   }
 
   getMeaningStr(){
@@ -459,32 +507,56 @@ export default class Player extends Component{
                       }
                     </TouchableOpacity>
                     <View style={{flex: 1}}/>
-                    <Text style={{color: '#fff'}}>Scenes</Text>
-                    <Switch
-                      value={this.state.playAll}
-                      onValueChange={this.onModeSwitchChanged}
-                      tintColor='#fff'
+                    <MySwitch
+                      onValueChange={this.onModeSwitchChanged}      // this is necessary for this component
+                      text1 = 'Scenes'                        // optional: first text in switch button --- default ON
+                      text2 = 'Play all'                       // optional: second text in switch button --- default OFF
+                      switchWidth = {120}                 // optional: switch width --- default 44
+                      switchHeight = {24}                 // optional: switch height --- default 100
+                      switchBorderRadius = {0}          // optional: switch border radius --- default oval
+                      switchSpeedChange = {300}           // optional: button change speed --- default 100
+                      switchBorderColor = '#4682b4'       // optional: switch border color --- default #d4d4d4
+                      switchBackgroundColor = '#fff0'      // optional: switch background color --- default #fff
+                      btnBorderColor = '#4682b4'          // optional: button border color --- default #00a4b9
+                      btnBackgroundColor = '#4682b4'      // optional: button background color --- default #00bcd4
+                      fontColor = '#fff'               // optional: text font color --- default #b1b1b1
+                      activeFontColor = '#fff'            // optional: active font color --- default #fff
                     />
-                    <Text style={{color: '#fff'}}>Play all</Text>
                     <View style={{flex: 1}}/>
-                    <Text style={{color: '#fff'}}>75%</Text>
-                    <Switch
-                      value={this.state.normalSpeed}
-                      onValueChange={this.onSpeedSwitchChanged}
-                      tintColor='#fff'
+                    <MySwitch
+                      onValueChange={this.onSpeedSwitchChanged}      // this is necessary for this component
+                      text1 = '75%'                        // optional: first text in switch button --- default ON
+                      text2 = '100%'                       // optional: second text in switch button --- default OFF
+                      switchWidth = {80}                 // optional: switch width --- default 44
+                      switchHeight = {24}                 // optional: switch height --- default 100
+                      switchBorderRadius = {0}          // optional: switch border radius --- default oval
+                      switchSpeedChange = {300}           // optional: button change speed --- default 100
+                      switchBorderColor = '#4682b4'       // optional: switch border color --- default #d4d4d4
+                      switchBackgroundColor = '#fff0'      // optional: switch background color --- default #fff
+                      btnBorderColor = '#4682b4'          // optional: button border color --- default #00a4b9
+                      btnBackgroundColor = '#4682b4'      // optional: button background color --- default #00bcd4
+                      fontColor = '#fff'               // optional: text font color --- default #b1b1b1
+                      activeFontColor = '#fff'            // optional: active font color --- default #fff
                     />
-                    <Text style={{color: '#fff'}}>100%</Text>
                   </View>
                 </View>
                 {this.state.playAll ?
                   <View style={styles.playallButtons}>
+                    <View style={{flex: 1, alignItems: 'center'}}>
+                      <TouchableOpacity
+                        onPress={this.onBack5}
+                        style={styles.playerButton}
+                      >
+                        <Image source={require('../assets/back5.png')} style={styles.imageButton}/>
+                      </TouchableOpacity>
+                    </View>
                     {this.state.play ?
                       <TouchableOpacity 
                         onPress={this.onPause}
                         style={styles.playerButton}
                       >
                         <Icon name="pause" size={30} color='#fff'/>
-                      </TouchableOpacity>                  
+                      </TouchableOpacity>
                       :
                       <TouchableOpacity 
                         onPress={this.onPlay}
@@ -493,29 +565,41 @@ export default class Player extends Component{
                         <Icon name="play" size={30} color='#fff'/>
                       </TouchableOpacity>
                     }
+                    <View style={{flex: 1, alignItems: 'center'}}>
+                      <TouchableOpacity 
+                        onPress={this.onForward5}
+                        style={styles.playerButton}
+                      >
+                        <Image source={require('../assets/forward5.png')} style={styles.imageButton}/>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                   :
                   <View style={styles.buttons}>
-                    <TouchableOpacity 
-                      onPress={this.onPrev}
-                      disabled={this.state.currentTargetSubtitle.index == 0}
-                      style={styles.playerButton}
-                    >
-                      <Icon name="step-backward" size={30} color='#fff'/>
-                    </TouchableOpacity>
+                    <View style={{flex: 1, alignItems: 'center'}}>
+                      <TouchableOpacity
+                        onPress={this.onPrev}
+                        disabled={this.state.currentTargetSubtitle.index == 0}
+                        style={styles.playerButton}
+                      >
+                        <Icon name="step-backward" size={30} color='#fff'/>
+                      </TouchableOpacity>
+                    </View>
                     <TouchableOpacity 
                       onPress={this.onReplay}
                       style={styles.playerButton}
                     >
                       <Icon name="undo-alt" size={30} color='#fff'/>
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                      onPress={this.onNext}
-                      disabled={this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1}
-                      style={styles.playerButton}
-                    >
-                      <Icon name="step-forward" size={30} color='#fff'/>
-                    </TouchableOpacity>
+                    <View style={{flex: 1, alignItems: 'center'}}>
+                      <TouchableOpacity 
+                        onPress={this.onNext}
+                        disabled={this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1}
+                        style={styles.playerButton}
+                      >
+                        <Icon name="step-forward" size={30} color='#fff'/>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 }
                 <View style={styles.playerBottomBar}>
@@ -541,13 +625,19 @@ export default class Player extends Component{
           }
         </TouchableWithoutFeedback>
         {this.state.isLoaded &&
-          <View 
+          <View
             style={styles.subtitleView} 
             onLayout={this.onLayoutSubtitleView}
           >
             <View style={styles.transcription}>
               {this.state.showTranscription ?
                 <View>
+                  <TouchableOpacity 
+                    style={{position: 'absolute', top: 0, left: 0, padding: 8}}
+                    onPress={this.onToggleFlag}>
+                      <Icon name="cog" size={20} solid/>
+                  </TouchableOpacity>
+
                   <ParsedText
                     style={styles.caption}
                     parse={
@@ -570,10 +660,12 @@ export default class Player extends Component{
                   </TouchableOpacity>
                 </View>
                 :
-                <Button 
-                  title="Click here to show transcription" 
-                  onPress={this.onPressedShowTranscription}
-                />
+                <View style={{padding: 8}}>
+                  <Button 
+                    title="Click here to show transcription" 
+                    onPress={this.onPressedShowTranscription}
+                  />
+                </View>
               }
             </View>
             <View style={styles.translation}>
@@ -582,7 +674,7 @@ export default class Player extends Component{
                   {this.state.currentNativeSubtitles.map((subtitle, index)=>
                     <ParsedText
                       key={index.toString()}
-                      style={[styles.caption, {color: '#4682b4'}]}
+                      style={[styles.caption, {color: '#4682b4', marginVertical: 0}]}
                       parse={
                         [
                           {pattern: /[^\s-&+,:;=?@#|'<>.^*()%!\\]+/, style: styles.parsedText, onPress: this.onPressNativeWord},
@@ -595,10 +687,12 @@ export default class Player extends Component{
                   )}
                 </View>
                 :
-                <Button 
-                  title="Click here to show translation" 
-                  onPress={this.onPressedShowTranslation}
-                />
+                <View style={{paddingHorizontal: 8}}>
+                  <Button 
+                    title="Click here to show translation" 
+                    onPress={this.onPressedShowTranslation}
+                  />
+                </View>
               }
             </View>
           </View>
@@ -610,17 +704,17 @@ export default class Player extends Component{
           showBackdrop={false}
           allowDragging={true}
           draggableRange={{
-            top: height,
-            bottom: 80,
+            top: this.state.panelTop,
+            bottom: PANEL_BOTTOM,
           }}
           onDrag={this.onDragPanel}
           onDragStart={this.onDragStartPanel}
           onDragEnd={this.onDragEndPanel}
         >
           <View style={styles.panel}>
-            <View style={{height: this.state.pannelPosition}}>
+            <View style={{height: this.state.panelPosition}}>
               <View style={styles.panelHeader}>
-                <Image source={require('../assets/glosbe.png')} style={{width: 40, height: 40}}/>
+                <Image source={require('../assets/glosbe.png')} style={{width: 36, height: 36, marginRight: 12}}/>
                 <TextInput 
                   style={styles.search}
                   returnKeyType={'search'}
@@ -679,7 +773,7 @@ const styles = {
     fontSize: 17,
     textAlign: 'center',
     marginHorizontal: 8,
-    marginTop: 8,
+    marginVertical: 8,
   },
 
   instructions: {
@@ -729,15 +823,15 @@ const styles = {
   buttons: {
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: '25%',
+    paddingHorizontal: 8,
   },
 
   playallButtons: {
     width: '100%',
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: '25%',
+    paddingHorizontal: 8,
   },
 
   sliderBar: {
@@ -791,8 +885,8 @@ const styles = {
   },
 
   panelHeader: {
-    height: 60,
-    paddingHorizontal: 8,
+    height: PANEL_HEADER_HEIGHT,
+    paddingHorizontal: 4,
     backgroundColor: '#4682b4',
     flexDirection: 'row',
     alignItems: 'center',
@@ -803,6 +897,7 @@ const styles = {
     flex: 1,
     color: '#fff', 
     fontSize: 18,
+    marginHorizontal: 4,
   },
 
   dictionaryExampleStyles: {
@@ -840,7 +935,6 @@ const styles = {
     borderWidth: 2, 
     borderColor: '#fff', 
     paddingHorizontal: 8,
-    marginLeft: 8,
   },
 
   searchLangText: {
@@ -856,5 +950,11 @@ const styles = {
     borderWidth: 1, 
     borderColor: 'red', 
     minWidth: 60,
+  },
+
+  imageButton: {
+    width: 30,
+    height: 30,
+    tintColor: '#fff'
   }
 };

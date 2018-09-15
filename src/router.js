@@ -4,11 +4,9 @@ import { createStackNavigator, createBottomTabNavigator } from 'react-navigation
 
 import PlayLists from './screens/PlayLists'
 import VideoList from './screens/VideoList'
-import Settings from './screens/Settings'
 import History from './screens/History';
-import YoutubePlayer from './screens/YoutubePlayer'
 import NativePlayer from './screens/NativePlayer';
-import AutoTranslate from './screens/History';
+import Splash from './screens/Splash';
 
 import { strings } from "./i18n";
 import store from "./store";
@@ -97,13 +95,23 @@ const TabNav =  createBottomTabNavigator({
     }
 });
 
-export const RootStack = createStackNavigator(
+const MainStack = createStackNavigator(
     {
         MainTab: { screen: TabNav },
         Player: { screen: NativePlayer },
     },
     {
       mode: 'modal',
+      headerMode: 'none',
+    }
+);
+
+export const RootStack = createStackNavigator(
+    {
+        Splash: { screen: Splash },
+        MainStack: { screen: MainStack },
+    },
+    {
       headerMode: 'none',
     }
 );
