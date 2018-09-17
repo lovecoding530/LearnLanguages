@@ -54,31 +54,14 @@ async function setCurrentTimeForHistoryVideo(videoId, currentTime){
     await setItem('history', historyVideos);
 }
 
-async function getFlaggedScenes(videoId){
-    let key = `flagged-scenes-${videoId}`;
+async function getFlaggedScenes(videoId, trackKey){
+    let key = `flagged-scenes-${videoId}-${trackKey}`;
     let flaggedScenes = await getItem(key);
     return flaggedScenes || [];
 }
 
-async function setFlaggedScenes(videoId, flaggedScenes){
-    let key = `flagged-scenes-${videoId}`;
-    await setItem(key, flaggedScenes);
-}
-
-async function addFlaggedScene(videoId, scene){
-    let key = `flagged-scenes-${videoId}`;
-    let flaggedScenes = await getItem(key);
-    flaggedScenes = [...flaggedScenes, scene];
-    await setItem(key, flaggedScenes);
-}
-
-async function removeFlaggedScene(videoId, scene){
-    let key = `flagged-scenes-${videoId}`;
-    let flaggedScenes = await getItem(key);
-    let index = flaggedScenes.indexOf(scene);
-    if(index > -1){
-        flaggedScenes.splice(index, 1);
-    }
+async function setFlaggedScenes(videoId, trackKey, flaggedScenes){
+    let key = `flagged-scenes-${videoId}-${trackKey}`;
     await setItem(key, flaggedScenes);
 }
 
@@ -91,6 +74,4 @@ export default {
     setCurrentTimeForHistoryVideo,
     getFlaggedScenes,
     setFlaggedScenes,
-    addFlaggedScene,
-    removeFlaggedScene,
 }

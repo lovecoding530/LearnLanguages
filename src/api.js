@@ -70,7 +70,39 @@ async function postJSON(url, json) {
     }
 }
 
-//==========unused===========================
+async function getSubtitles(subtitles_uri, from){
+    if(from == 'youtube'){
+        let xmlStr = await getText(subtitles_uri);
+        if(xmlStr){
+            let parser = new DOMParser();
+            let xml = parser.parseFromString(xmlStr, "text/xml");
+            let json = xmlToJson(xml);
+            let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
+            let subtitles = _texts.map((text, index) => ({
+                index,
+                start: parseFloat(text["@attributes"].start),
+                dur: parseFloat(text["@attributes"].dur),
+                end: (parseFloat(text["@attributes"].start) * 1000 + parseFloat(text["@attributes"].dur) * 1000) / 1000,
+                text: text['#text'],
+            }));
+            return subtitles;
+        }
+    }else{
+        let res = await getJSON(subtitles_uri);
+        if(res && res.subtitles){
+            let subtitles = res.subtitles.map((subtitle, index)=>({
+                ...subtitle,
+                index,
+                start: subtitle.start / 1000,
+                end: subtitle.end / 1000,
+                dur: (subtitle.end-subtitle.start) / 1000,
+            }))
+            return subtitles
+        }
+    }
+
+    return null;
+}
 
 async function getSubtitleTracksFromYoutube(videoId){
     let tracks = [];
@@ -83,8 +115,15 @@ async function getSubtitleTracksFromYoutube(videoId){
             let _tracks = json.transcript_list.track instanceof Array ? json.transcript_list.track : [json.transcript_list.track]
             tracks = _tracks.map(track=>{
                 track = track["@attributes"];
+                let name = track.lang_translated;
+                let label = `Youtube ${name}`;
+                let key = `youtube.${track.lang_code}`;        
                 return {
                     ...track, 
+                    from: 'youtube',
+                    name,
+                    label,
+                    key,
                     subtitles_uri: `https://www.youtube.com/api/timedtext?lang=${track.lang_code}&v=${videoId}&name=${track.name}`
                 }
             })
@@ -93,41 +132,41 @@ async function getSubtitleTracksFromYoutube(videoId){
     return tracks;
 }
 
-async function getSubtitlesFromYoutube(videoId, langCode) {
+async function getSubtitlesFromYoutube(videoId, langCode, translated) {
     let tracks = await getSubtitleTracksFromYoutube(videoId);
-    let trackForLangCode = tracks.find(track=>track.lang_code.startsWith(langCode));
-    if(trackForLangCode){
-        let xmlStr = await getText(trackForLangCode.subtitles_uri);
-
-        if(xmlStr){
-            let parser = new DOMParser();
-            let xml = parser.parseFromString(xmlStr, "text/xml");
-            let json = xmlToJson(xml);
-            let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
-            let subtitles = _texts.map((text, index) => ({
-                index,
-                start: parseFloat(text["@attributes"].start),
-                dur: parseFloat(text["@attributes"].dur),
-                end: (parseFloat(text["@attributes"].start) * 1000 + parseFloat(text["@attributes"].dur) * 1000) / 1000,
-                text: text['#text'],
-            }));
-
-            return subtitles;
+    let subtitles_uri = null;
+    if(tracks.length > 0){
+        if(translated){
+            let trackForLangCode = tracks[0];
+            if(trackForLangCode) subtitles_uri = `${trackForLangCode.subtitles_uri}&tlang=${langCode}`;
+        }else{
+            let trackForLangCode = tracks.find(track=>track.lang_code.includes(langCode));
+            if(trackForLangCode) subtitles_uri = trackForLangCode.subtitles_uri;
         }
+    }
+    if(subtitles_uri){
+        let subtitles = await getSubtitles(subtitles_uri, 'youtube');
+        return subtitles;
     }
     return null
 }
 
-//================================================
-
+/*
 async function getSubtitleTracksFromYoutubeVideoInfo(videoInfo){
     let _tracks = [];
     if(videoInfo.player_response.captions){
         _tracks = videoInfo.player_response.captions.playerCaptionsTracklistRenderer.captionTracks;
     }
     let tracks = _tracks.map(track=>{
+        let name = track.name.simpleText;
+        let label = `Youtube ${name}`;
+        let key = `youtube.${track.lang_code}.${track.kind}`;
         return {
             ...track,
+            from: 'youtube',
+            name,
+            label,
+            key,
             lang_code: track.languageCode,
             subtitles_uri: track.baseUrl
         }
@@ -135,59 +174,30 @@ async function getSubtitleTracksFromYoutubeVideoInfo(videoInfo){
     return tracks;
 }
 
-async function getSubtitlesFromYoutubeVideoInfo(videoInfo, langCode, isAsr) {
+async function getSubtitlesFromYoutubeVideoInfo(videoInfo, langCode, isAsr, translated) {
     let tracks = await getSubtitleTracksFromYoutubeVideoInfo(videoInfo);
-    let trackForLangCode = tracks.find(track=>(
-        track.lang_code.startsWith(langCode) 
-        && 
-        (isAsr ? (track.kind=='asr') : (track.kind!='asr')))
-    );
-    if(trackForLangCode){
-        let xmlStr = await getText(trackForLangCode.subtitles_uri);
-
-        if(xmlStr){
-            let parser = new DOMParser();
-            let xml = parser.parseFromString(xmlStr, "text/xml");
-            let json = xmlToJson(xml);
-            let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
-            let subtitles = _texts.map((text, index) => ({
-                index,
-                start: parseFloat(text["@attributes"].start),
-                dur: parseFloat(text["@attributes"].dur),
-                end: (parseFloat(text["@attributes"].start) * 1000 + parseFloat(text["@attributes"].dur) * 1000) / 1000,
-                text: text['#text'],
-            }));
-
-            return subtitles;
+    let subtitles_uri = null;
+    if(tracks.length > 0){
+        if(translated){
+            let trackForLangCode = tracks[0];
+            if(trackForLangCode) subtitles_uri = `${trackForLangCode.subtitles_uri}&tlang=${langCode}`;
+        }else{
+            let trackForLangCode = tracks.find(track=>(
+                track.lang_code.startsWith(langCode) 
+                && 
+                (isAsr ? (track.kind=='asr') : (track.kind!='asr')))
+            );
+            if(trackForLangCode) subtitles_uri = trackForLangCode.subtitles_uri;
         }
+    }
+
+    if(subtitles_uri){
+        let subtitles = await getSubtitles(subtitles_uri, 'youtube');
+        return subtitles;
     }
     return null
 }
-
-async function getAutoSubtitlesFromYoutubeVideoInfo(videoInfo, langCode) {
-    let tracks = await getSubtitleTracksFromYoutubeVideoInfo(videoInfo);
-    let firstTrack = tracks.find(track=>track.kind!='asr');
-    if(firstTrack){
-        let xmlStr = await getText(firstTrack.subtitles_uri + "&tlang=" + langCode);
-
-        if(xmlStr){
-            let parser = new DOMParser();
-            let xml = parser.parseFromString(xmlStr, "text/xml");
-            let json = xmlToJson(xml);
-            let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
-            let subtitles = _texts.map((text, index) => ({
-                index,
-                start: parseFloat(text["@attributes"].start),
-                dur: parseFloat(text["@attributes"].dur),
-                end: (parseFloat(text["@attributes"].start) * 1000 + parseFloat(text["@attributes"].dur) * 1000) / 1000,
-                text: text['#text'],
-            }));
-
-            return subtitles;
-        }
-    }
-    return null
-}
+*/
 
 async function getSubtitleTracksFromAmara(videoId){
     var apiUsername = "Yash5";
@@ -209,6 +219,18 @@ async function getSubtitleTracksFromAmara(videoId){
             tracks = _.reject(tracks, {published: false})
         }
     }
+    tracks = tracks.map(track=>{
+        let label = `Amara ${track.name}`;
+        let key = `amara.${track.code}`;
+        let lang_code = track.code;
+        return {
+            ...track,
+            from: 'amara',
+            lang_code,
+            label,
+            key,
+        }
+    });
     return tracks;
 }
 
@@ -216,20 +238,32 @@ async function getSubtitlesFromAmara(videoId, langCode){
     let tracks = await getSubtitleTracksFromAmara(videoId);
     let trackForLangCode = tracks.find(track=>track.code.startsWith(langCode));
     if(trackForLangCode){
-        let res = await getJSON(trackForLangCode.subtitles_uri);
-        if(res && res.subtitles){
-            let subtitles = res.subtitles.map((subtitle, index)=>({
-                ...subtitle,
-                index,
-                start: subtitle.start / 1000,
-                end: subtitle.end / 1000,
-                dur: (subtitle.end-subtitle.start) / 1000,
-            }))
-            return subtitles
-        }
+        let subtitles = await getSubtitles(trackForLangCode.subtitles_uri, 'amara');
+        return subtitles
     }
     return null
 }
+
+async function getSubtitleTracks(videoId){
+    let youtubeSubtitleTracks = await getSubtitleTracksFromYoutube(videoId);
+
+    let amaraSubtitleTracks = await getSubtitleTracksFromAmara(videoId);
+
+    let tracks = [...youtubeSubtitleTracks, ...amaraSubtitleTracks];
+
+    return tracks;
+}
+
+async function getSubtitlesFromTrack(track, tlang){
+    let subtitles_uri = track.subtitles_uri;
+    if(tlang) subtitles_uri = `${track.subtitles_uri}&tlang=${tlang}`;
+    if(subtitles_uri){
+        let subtitles = await getSubtitles(subtitles_uri, track.from);
+        return subtitles;
+    }
+    return null
+}
+
 
 async function getChannelID(targetLang, nativeLang){
     let url = 'https://demo1204964.mockable.io/channel';
@@ -291,8 +325,9 @@ async function getVideoItemsByIds(ids){
 }
 
 async function getYoutubeVideoInfo(video_id){
-    let el='detailpage';
-    let url = buildURL(API_GET_VIDEO_INFO, {video_id, el});
+    let hl = 'en';
+    let el = 'detailpage';
+    let url = buildURL(API_GET_VIDEO_INFO, {video_id, el, hl});
     let res = await getText(url);
 
     let videoInfo = qs.parse(res);
@@ -310,23 +345,11 @@ async function getYoutubeVideoInfo(video_id){
     return videoInfo;
 }
 
-async function getYoutubeVideoDownloadUrl(video_id){
+async function getYoutubeVideoDownloadUrl(video_id, videoInfo){
     let downloadUrl = "";
-    let videoInfo = await getYoutubeVideoInfo(video_id);
-    let videos = videoInfo.url_encoded_fmt_stream_map;
-    if(videos){
-        let mp4 = videos.find(video=>video.itag==18);
-        downloadUrl = mp4.url;
-        if(mp4.s){
-            let signature = await getDeciperSignature2(videoInfo.video_id, mp4.s);
-            downloadUrl = `${downloadUrl}&signature=${signature}`;
-        }
+    if(!videoInfo){
+        videoInfo = await getYoutubeVideoInfo(video_id);
     }
-    return downloadUrl;
-}
-
-async function getYoutubeVideoDownloadUrlFromVideoInfo(videoInfo){
-    let downloadUrl = "";
     let videos = videoInfo.url_encoded_fmt_stream_map;
     if(videos){
         let mp4 = videos.find(video=>video.itag==18);
@@ -417,12 +440,13 @@ export default {
 
     getSubtitleTracksFromYoutube,
     getSubtitlesFromYoutube,
-    getSubtitleTracksFromYoutubeVideoInfo,
-    getSubtitlesFromYoutubeVideoInfo,
-    getAutoSubtitlesFromYoutubeVideoInfo,
+    getSubtitlesFromTrack,
 
     getSubtitleTracksFromAmara,
     getSubtitlesFromAmara,
+
+    getSubtitleTracks,
+
     getChannelID,
     getPlaylistsInChannel,
     getVideoItemsInPlaylist,
@@ -430,7 +454,6 @@ export default {
 
     getYoutubeVideoInfo,
     getYoutubeVideoDownloadUrl,
-    getYoutubeVideoDownloadUrlFromVideoInfo,
     getDeciperSignature1,
     getDeciperSignature2,
     

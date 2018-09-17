@@ -1,20 +1,75 @@
 import React, {Component} from 'react';
-import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity, Modal} from 'react-native';
+import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity, Modal, Picker, TouchableWithoutFeedback} from 'react-native';
 import api from '../api';
 import { strings } from '../i18n';
+const targetLang = 'es';
+const nativeLang = 'en';
 
 export default class SelectSubModal extends Component {
+    state={
+        selectedTargetTrackKey: "",
+        selectedNativeTrackKey: "",
+        targetTracks: [],
+        nativeTracks: [],
+    }
+
+    componentWillReceiveProps () {
+        let {subtitleTracks, targetTrack, nativeTrack} = this.props;
+
+        let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(targetLang));
+        let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(nativeLang));
+
+        this.setState({
+            targetTracks,
+            nativeTracks,
+            selectedTargetTrackKey: targetTrack.key,
+            selectedNativeTrackKey: nativeTrack.key,
+        });
+    }
+
+    onPressOK = () => {
+        let {subtitleTracks, onSelect} = this.props;
+
+        let targetTrack = subtitleTracks.find(track=>track.key == this.state.selectedTargetTrackKey);
+        let nativeTrack = subtitleTracks.find(track=>track.key == this.state.selectedNativeTrackKey);
+
+        onSelect(targetTrack, nativeTrack);
+    }
+
     render () {
-        let {visible} = this.props;
+        let {visible, onSelect, onCancel} = this.props;
         return (
             <Modal
                 supportedOrientations={[ 'portrait', 'landscape' ]}
                 animationType="slide"
                 transparent={true}
                 visible={visible}
+                onRequestClose={onCancel}
             >
                 <View style={styles.container}>
                     <View style={styles.modal}>
+                        <Text>Transcription Subtitles</Text>
+                        <Picker
+                            selectedValue={this.state.selectedTargetTrackKey}
+                            style={{ height: 50, width: '100%' }}
+                            onValueChange={(selectedTargetTrackKey, itemIndex) => this.setState({selectedTargetTrackKey})}>
+                            {this.state.targetTracks.map((track, index)=>(
+                                <Picker.Item label={track.label} value={track.key} key={track.key}/>
+                            ))}
+                        </Picker>
+                        <Text>Translation Subtitles</Text>
+                        <Picker
+                            selectedValue={this.state.selectedNativeTrackKey}
+                            style={{ height: 50, width: '100%' }}
+                            onValueChange={(selectedNativeTrackKey, itemIndex) => this.setState({selectedNativeTrackKey})}>
+                            {this.state.nativeTracks.map((track, index)=>(
+                                <Picker.Item label={track.label} value={track.key} key={track.key}/>
+                            ))}
+                        </Picker>
+                        <View style={styles.buttonBar}>
+                            <Button title="Cancel" onPress={onCancel}/>
+                            <Button title="  OK  " onPress={this.onPressOK}/>
+                        </View>
                     </View>
                 </View>
             </Modal>
@@ -25,21 +80,20 @@ export default class SelectSubModal extends Component {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: Colors.backgroundModal,
-		justifyContent: 'center',
-		alignItems: 'center'
+        backgroundColor: '#0006',
+        justifyContent: 'center'
 	},
 
 	modal: {
-		backgroundColor: Colors.backgroundPrimary,
-		borderRadius: deviceWidth(1.2),
-		width: 300,
-		padding: 15,
-		justifyContent: 'center',
-		alignItems: 'center',
-		shadowColor: '#000',
-		shadowOffset: { width: Metrics.shadowOffset, height: Metrics.shadowOffset },
-		shadowOpacity: 0.4,
-		shadowRadius: 0
-	},
+        backgroundColor: '#fff',
+        margin: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 16,
+    },
+    
+    buttonBar: {
+        flexDirection: 'row', 
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+    }
 });

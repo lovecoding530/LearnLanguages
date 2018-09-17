@@ -59,10 +59,12 @@ export default class Player extends Component{
       videoId,
       videoTitle: "",
       videoUrl: "",
-      quality: "",
+      videoInfo: null,
       error: "",
       status: "", //youtube player status
-      tracks: [], //video tracks
+      subtitleTracks: null,
+      targetTrack: null,
+      nativeTrack: null,
       targetSubtitles: [], //video subtitle
       nativeSubtitles: [], //video subtitle
       currentTargetSubtitle: {}, //transcription
@@ -92,57 +94,64 @@ export default class Player extends Component{
       isDraggingSlide: false,
       appState: AppState.currentState,
       panelTop: height,
+      modalVisible: false,
     };
   }
 
   async componentDidMount() {
     let videoInfo = await api.getYoutubeVideoInfo(this.state.videoId);
-    let videoUrl = await api.getYoutubeVideoDownloadUrlFromVideoInfo(videoInfo);
+    let videoUrl = await api.getYoutubeVideoDownloadUrl(this.state.videoId, videoInfo);
     console.log('videoUrl', videoUrl);
 
-    var targetSubtitles = await api.getSubtitlesFromYoutubeVideoInfo(videoInfo, targetLang, false);
-    if(!targetSubtitles){
-      targetSubtitles = await api.getSubtitlesFromAmara(this.state.videoId, targetLang);
-    }
+    /*
+      var targetSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, targetLang, false);
+      if(!targetSubtitles){
+        targetSubtitles = await api.getSubtitlesFromAmara(this.state.videoId, targetLang);
+      }
 
-    var nativeSubtitles = null;
-    if(targetSubtitles){
-      if(this.state.human || this.state.shared){
-        var nativeSubtitles = await api.getSubtitlesFromYoutubeVideoInfo(videoInfo, nativeLang, false);
-        if(!nativeSubtitles){
-          nativeSubtitles = await api.getSubtitlesFromAmara(this.state.videoId, nativeLang);
-        }
-  
-        if(this.state.shared){
-          //save new video
+      var nativeSubtitles = null;
+      if(targetSubtitles){
+        if(this.state.human || this.state.shared){
+          var nativeSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, nativeLang, false);
           if(!nativeSubtitles){
-            nativeSubtitles = await api.getAutoSubtitlesFromYoutubeVideoInfo(videoInfo, nativeLang);
+            nativeSubtitles = await api.getSubtitlesFromAmara(this.state.videoId, nativeLang);
           }
+
+          if(this.state.shared){
+            //save new video
+            if(!nativeSubtitles){
+              nativeSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, nativeLang, true);
+            }
+          }
+        }else{
+          var nativeSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, nativeLang, true);
         }
       }else{
-        var nativeSubtitles = await api.getAutoSubtitlesFromYoutubeVideoInfo(videoInfo, nativeLang);
+        alert('There is no subtitle for target language');
       }
-    }else{
-      alert('There is no subtitle for target language');
+    */
+
+    let subtitleTracks = await api.getSubtitleTracks(this.state.videoId);
+    let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(targetLang));
+    let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(nativeLang));
+
+    let targetTrack = targetTracks.find(track=>track.from=='youtube');
+    if(!targetTrack){
+      targetTrack = targetTracks.find(track=>track.from=='amara');
     }
 
-    let flaggedScenes = await appdata.getFlaggedScenes(this.state.videoId);
+    let nativeTrack = nativeTracks.find(track=>track.from=='youtube');
+    if(!nativeTrack){
+      nativeTrack = nativeTracks.find(track=>track.from=='amara');
+    }
+
+    await this.selectSub(targetTrack, nativeTrack);
 
     this.setState({
       videoUrl,
       videoInfo,
       videoTitle: videoInfo.title,
-      targetSubtitles: targetSubtitles || [],
-      nativeSubtitles: nativeSubtitles || [],
-      flaggedScenes,
-      currentReviewScene: (flaggedScenes.length > 0) ? 0 : -1
-    }, () => {
-      let currentTargetSubtitle = this.state.targetSubtitles[0];
-      let currentNativeSubtitles = this.getNativeSubtitlesForTarget(currentTargetSubtitle);
-      this.setState({
-        currentTargetSubtitle: currentTargetSubtitle || {},
-        currentNativeSubtitles: currentNativeSubtitles || []
-      });
+      subtitleTracks,
     });
 
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow);
@@ -179,6 +188,10 @@ export default class Player extends Component{
       this.setState({play: false});
     }
     this.setState({appState: nextAppState});
+  }
+
+  async initFromSelectedTracks (targetTrack, nativeTrack) {
+    
   }
 
   getNativeSubtitlesForTarget(targetSubtitle){
@@ -417,7 +430,7 @@ export default class Player extends Component{
     }else{
       flaggedScenes.push(scene);
     }
-    await appdata.setFlaggedScenes(this.state.videoId, flaggedScenes);
+    await appdata.setFlaggedScenes(this.state.videoId, this.state.targetTrack.key, flaggedScenes);
     this.setState({
       flaggedScenes,
       currentReviewScene: (flaggedScenes.length > 0) ? 0 : -1
@@ -436,6 +449,56 @@ export default class Player extends Component{
     if(forward5 > this.state.duration) forward5 = duration;
     this.player.seek(forward5);
     this.setState({play: true});
+  }
+
+  async selectSub(targetTrack, nativeTrack){
+    let tlang=null;
+    if(targetTrack){
+      if(this.state.auto){
+        nativeTrack = targetTrack;
+        tlang = nativeLang;
+      }else{
+        if(this.state.shared && !nativeTrack){
+          nativeTrack = targetTrack;
+          tlang = nativeLang;
+        }
+      }
+    }
+    if(!targetTrack || !nativeTrack){
+      alert('There is no subtitle track');
+      return;
+    }
+    let targetSubtitles = await api.getSubtitlesFromTrack(targetTrack);
+    let nativeSubtitles = await api.getSubtitlesFromTrack(nativeTrack, tlang);
+
+    let flaggedScenes = await appdata.getFlaggedScenes(this.state.videoId, targetTrack.key);
+
+    this.setState({
+      targetTrack,
+      nativeTrack,
+      targetSubtitles: targetSubtitles || [],
+      nativeSubtitles: nativeSubtitles || [],
+      flaggedScenes,
+      currentReviewScene: (flaggedScenes.length > 0) ? 0 : -1,
+    }, () => { 
+      let currentTargetSubtitle = this.state.targetSubtitles[0];
+      let currentNativeSubtitles = this.getNativeSubtitlesForTarget(currentTargetSubtitle);
+      if(this.state.isLoaded) this.player.seek(0);
+      this.setState({
+        play: true,
+        currentTargetSubtitle: currentTargetSubtitle || {},
+        currentNativeSubtitles: currentNativeSubtitles || []
+      });
+    });
+  }
+
+  onSelectSub = async (targetTrack, nativeTrack) => {
+    this.setState({modalVisible: false});
+    await this.selectSub(targetTrack, nativeTrack);
+  }
+
+  onCancelSub = () => {
+    this.setState({modalVisible: false});
   }
 
   getMeaningStr(){
@@ -632,12 +695,6 @@ export default class Player extends Component{
             <View style={styles.transcription}>
               {this.state.showTranscription ?
                 <View>
-                  <TouchableOpacity 
-                    style={{position: 'absolute', top: 0, left: 0, padding: 8}}
-                    onPress={this.onToggleFlag}>
-                      <Icon name="cog" size={20} solid/>
-                  </TouchableOpacity>
-
                   <ParsedText
                     style={styles.caption}
                     parse={
@@ -649,6 +706,11 @@ export default class Player extends Component{
                   >
                     {currentTargetSubtitleText}
                   </ParsedText>
+                  <TouchableOpacity 
+                    style={{position: 'absolute', top: 0, left: 0, padding: 8}}
+                    onPress={()=>this.setState({modalVisible: true})}>
+                      <Icon name="cog" size={20} solid/>
+                  </TouchableOpacity>
                   <TouchableOpacity 
                     style={{position: 'absolute', top: 0, right: 0, padding: 8,}}
                     onPress={this.onToggleFlag}>
@@ -751,6 +813,16 @@ export default class Player extends Component{
             </View>
           </View>
         </SlidingUpPanel>
+        {(this.state.subtitleTracks && this.state.targetTrack && this.state.nativeTrack) &&
+          <SelectSubModal
+            visible={this.state.modalVisible}
+            subtitleTracks={this.state.subtitleTracks}
+            targetTrack={this.state.targetTrack}
+            nativeTrack={this.state.nativeTrack}
+            onSelect={this.onSelectSub}
+            onCancel={this.onCancelSub}
+          />
+        }
       </View>
     );
   }
