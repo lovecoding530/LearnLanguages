@@ -17,6 +17,7 @@
     "react-native-i18n": "^2.0.15",
     "react-native-parsed-text": "0.0.20",
     "react-native-render-html": "^3.10.0",
+    "react-native-segmented-control-tab": "^3.3.1",
     "react-native-sentry": "^0.39.0",
     "react-native-sliding-up-panel": "^1.1.12",
     "react-native-switch": "^1.5.0",

@@ -65,6 +65,17 @@ async function setFlaggedScenes(videoId, trackKey, flaggedScenes){
     await setItem(key, flaggedScenes);
 }
 
+async function getSelectedTracks(videoId){
+    let key = `selected-tracks-${videoId}`;
+    let selectedTracks = await getItem(key);
+    return selectedTracks || {};
+}
+
+async function setSelectedTracks(videoId, target, native){
+    let key = `selected-tracks-${videoId}`;
+    await setItem(key, {target, native});
+}
+
 export default {
     getItem, 
     setItem, 
@@ -74,4 +85,6 @@ export default {
     setCurrentTimeForHistoryVideo,
     getFlaggedScenes,
     setFlaggedScenes,
+    getSelectedTracks,
+    setSelectedTracks,
 }

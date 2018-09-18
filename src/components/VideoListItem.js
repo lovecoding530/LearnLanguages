@@ -13,7 +13,8 @@ export default class ListItem extends Component {
 
     async componentDidMount() {
         let {item} = this.props;
-        let flaggedScenes = await appdata.getFlaggedScenes(item.id);
+        let selectedTrack = await appdata.getSelectedTracks(item.id);
+        let flaggedScenes = await appdata.getFlaggedScenes(item.id, selectedTrack.target);
         let flagCount = flaggedScenes.length;
         this.setState({flagCount});
     }

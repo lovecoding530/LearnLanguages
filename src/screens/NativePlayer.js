@@ -35,6 +35,7 @@ import HTML from 'react-native-render-html';
 import appdata from '../appdata';
 import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
+import Segment from 'react-native-segmented-control-tab'
 
 const videoId = "kw2OFJeRIZ8"; 
 const targetLang = 'es';
@@ -103,47 +104,19 @@ export default class Player extends Component{
     let videoUrl = await api.getYoutubeVideoDownloadUrl(this.state.videoId, videoInfo);
     console.log('videoUrl', videoUrl);
 
-    /*
-      var targetSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, targetLang, false);
-      if(!targetSubtitles){
-        targetSubtitles = await api.getSubtitlesFromAmara(this.state.videoId, targetLang);
-      }
-
-      var nativeSubtitles = null;
-      if(targetSubtitles){
-        if(this.state.human || this.state.shared){
-          var nativeSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, nativeLang, false);
-          if(!nativeSubtitles){
-            nativeSubtitles = await api.getSubtitlesFromAmara(this.state.videoId, nativeLang);
-          }
-
-          if(this.state.shared){
-            //save new video
-            if(!nativeSubtitles){
-              nativeSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, nativeLang, true);
-            }
-          }
-        }else{
-          var nativeSubtitles = await api.getSubtitlesFromYoutube(this.state.videoId, nativeLang, true);
-        }
-      }else{
-        alert('There is no subtitle for target language');
-      }
-    */
-
     let subtitleTracks = await api.getSubtitleTracks(this.state.videoId);
     let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(targetLang));
     let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(nativeLang));
 
-    let targetTrack = targetTracks.find(track=>track.from=='youtube');
-    if(!targetTrack){
-      targetTrack = targetTracks.find(track=>track.from=='amara');
-    }
+    let selectedTracks = await appdata.getSelectedTracks(this.state.videoId);
+    console.log("selectedTracks", selectedTracks);
+    let targetTrack = targetTracks.find(track=>track.key==selectedTracks.target) ||
+                      targetTracks.find(track=>track.from=='youtube') ||
+                      targetTracks.find(track=>track.from=='amara');
 
-    let nativeTrack = nativeTracks.find(track=>track.from=='youtube');
-    if(!nativeTrack){
-      nativeTrack = nativeTracks.find(track=>track.from=='amara');
-    }
+    let nativeTrack = nativeTracks.find(track=>track.key==selectedTracks.native) ||
+                      nativeTracks.find(track=>track.from=='youtube') ||
+                      nativeTracks.find(track=>track.from=='amara');
 
     await this.selectSub(targetTrack, nativeTrack);
 
@@ -330,14 +303,14 @@ export default class Player extends Component{
 
   onModeSwitchChanged = (value) => {
     this.setState({
-      playAll: value === 2,
+      playAll: Boolean(value),
       showTranscription: true, 
       showTranslation: true,
     });
   }
 
   onSpeedSwitchChanged = (value) => {
-    this.setState({normalSpeed: value === 2});
+    this.setState({normalSpeed: Boolean(value)});
   }
 
   onPressPlayer = () => {
@@ -490,6 +463,7 @@ export default class Player extends Component{
         currentNativeSubtitles: currentNativeSubtitles || []
       });
     });
+    await appdata.setSelectedTracks(this.state.videoId, targetTrack.key, nativeTrack.key);
   }
 
   onSelectSub = async (targetTrack, nativeTrack) => {
@@ -570,36 +544,18 @@ export default class Player extends Component{
                       }
                     </TouchableOpacity>
                     <View style={{flex: 1}}/>
-                    <MySwitch
-                      onValueChange={this.onModeSwitchChanged}      // this is necessary for this component
-                      text1 = 'Scenes'                        // optional: first text in switch button --- default ON
-                      text2 = 'Play all'                       // optional: second text in switch button --- default OFF
-                      switchWidth = {120}                 // optional: switch width --- default 44
-                      switchHeight = {24}                 // optional: switch height --- default 100
-                      switchBorderRadius = {0}          // optional: switch border radius --- default oval
-                      switchSpeedChange = {300}           // optional: button change speed --- default 100
-                      switchBorderColor = '#4682b4'       // optional: switch border color --- default #d4d4d4
-                      switchBackgroundColor = '#fff0'      // optional: switch background color --- default #fff
-                      btnBorderColor = '#4682b4'          // optional: button border color --- default #00a4b9
-                      btnBackgroundColor = '#4682b4'      // optional: button background color --- default #00bcd4
-                      fontColor = '#fff'               // optional: text font color --- default #b1b1b1
-                      activeFontColor = '#fff'            // optional: active font color --- default #fff
+                    <Segment
+                      values={['Scenes', 'Play all']}
+                      selectedIndex={Number(this.state.playAll)}
+                      onTabPress={this.onModeSwitchChanged}
+                      tabsContainerStyle={{width: 120, height: 22}}
                     />
                     <View style={{flex: 1}}/>
-                    <MySwitch
-                      onValueChange={this.onSpeedSwitchChanged}      // this is necessary for this component
-                      text1 = '75%'                        // optional: first text in switch button --- default ON
-                      text2 = '100%'                       // optional: second text in switch button --- default OFF
-                      switchWidth = {80}                 // optional: switch width --- default 44
-                      switchHeight = {24}                 // optional: switch height --- default 100
-                      switchBorderRadius = {0}          // optional: switch border radius --- default oval
-                      switchSpeedChange = {300}           // optional: button change speed --- default 100
-                      switchBorderColor = '#4682b4'       // optional: switch border color --- default #d4d4d4
-                      switchBackgroundColor = '#fff0'      // optional: switch background color --- default #fff
-                      btnBorderColor = '#4682b4'          // optional: button border color --- default #00a4b9
-                      btnBackgroundColor = '#4682b4'      // optional: button background color --- default #00bcd4
-                      fontColor = '#fff'               // optional: text font color --- default #b1b1b1
-                      activeFontColor = '#fff'            // optional: active font color --- default #fff
+                    <Segment
+                      values={['75%', '100%']}
+                      selectedIndex={Number(this.state.normalSpeed)}
+                      onTabPress={this.onSpeedSwitchChanged}
+                      tabsContainerStyle={{width: 100, height: 22}}
                     />
                   </View>
                 </View>
@@ -694,9 +650,14 @@ export default class Player extends Component{
           >
             <View style={styles.transcription}>
               {this.state.showTranscription ?
-                <View>
+                <View style={{flexDirection: 'row'}}>
+                  <TouchableOpacity 
+                    style={{padding: 8}}
+                    onPress={()=>this.setState({modalVisible: true})}>
+                      <Icon name="cog" size={20} solid/>
+                  </TouchableOpacity>
                   <ParsedText
-                    style={styles.caption}
+                    style={[styles.caption, {flex: 1}]}
                     parse={
                       [
                         {pattern: /[^\s-&+,:;=?@#|'<>.^*()%!\\]+/, style: styles.parsedText, onPress: this.onPressTargetWord},
@@ -707,12 +668,7 @@ export default class Player extends Component{
                     {currentTargetSubtitleText}
                   </ParsedText>
                   <TouchableOpacity 
-                    style={{position: 'absolute', top: 0, left: 0, padding: 8}}
-                    onPress={()=>this.setState({modalVisible: true})}>
-                      <Icon name="cog" size={20} solid/>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={{position: 'absolute', top: 0, right: 0, padding: 8,}}
+                    style={{padding: 8,}}
                     onPress={this.onToggleFlag}>
                     {isFlagged ? 
                       <Icon name="flag" size={20} color='red' solid/>

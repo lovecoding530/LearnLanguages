@@ -18,11 +18,11 @@ export default class MySwitch extends Component {
 		onValueChange: () => null
 	};
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
 
         this.state = {
-          activeSwitch: 1,
+          activeSwitch: props.value,
           sbWidth: 100,
           sbHeight: 44,
           direction: 'ltr',
