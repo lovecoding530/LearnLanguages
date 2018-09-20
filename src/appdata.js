@@ -26,7 +26,7 @@ async function getHistoryVideos(){
 
 async function addHistoryVideo(videoItem){
     let historyVideos = await getHistoryVideos();
-    let existingIndex = historyVideos.findIndex((item)=>item.contentDetails.videoId==videoItem.contentDetails.videoId);
+    let existingIndex = historyVideos.findIndex((item)=>item.id==videoItem.id);
     if(existingIndex >= 0){
         historyVideos.splice(existingIndex, 1);        
     }

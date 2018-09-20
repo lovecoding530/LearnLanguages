@@ -6,17 +6,27 @@ import Icon from 'react-native-vector-icons/dist/FontAwesome5';
 import moment from "moment";
 import { timeStringFromSeconds } from '../utils';
 
-export default class ListItem extends Component {
+export default class VideoListItem extends Component {
     state = {
         flagCount: 0,
     }
 
     async componentDidMount() {
-        let {item} = this.props;
-        let selectedTrack = await appdata.getSelectedTracks(item.id);
-        let flaggedScenes = await appdata.getFlaggedScenes(item.id, selectedTrack.target);
-        let flagCount = flaggedScenes.length;
-        this.setState({flagCount});
+
+    }
+
+    async componentWillReceiveProps(props){
+        let {item, focus} = props;
+        if(focus){
+            let selectedTrack = await appdata.getSelectedTracks(item.id);
+            let flaggedScenes = await appdata.getFlaggedScenes(item.id, selectedTrack.target);
+            let flagCount = flaggedScenes.length;
+            this.setState({flagCount});  
+        }
+    }
+
+    async setFlagCount(){
+        
     }
 
     render() {

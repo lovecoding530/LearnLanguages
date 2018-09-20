@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {Text, View, Image, TouchableOpacity} from 'react-native';
 import {FAV_ICON} from '../appdata';
 
-export default ListItem = (props) => {
+export default PlayListItem = (props) => {
     let {item, onPress} = props;
     let thumbnailUrl = (item.snippet.thumbnails) ? Object.values(item.snippet.thumbnails)[0].url : FAV_ICON;
     return (
@@ -13,7 +13,7 @@ export default ListItem = (props) => {
             />
             <View style={styles.titleView}>
                 <Text style={styles.title} numberOfLines={3}>{item.snippet.title}</Text>
-                <Text style={styles.detail} numberOfLines={3}>{item.snippet.channelTitle}</Text>
+                {/* <Text style={styles.detail} numberOfLines={3}>{item.snippet.channelTitle}</Text> */}
             </View>
         </TouchableOpacity>
     )

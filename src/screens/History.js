@@ -8,6 +8,7 @@ export default class History extends Component {
         super(props);
         this.state = {
             videos: [], 
+            focus: true,
         }
     }
 
@@ -16,7 +17,10 @@ export default class History extends Component {
         this.setState({videos});
         this.props.navigation.addListener('willFocus', async (route) => { 
             let videos = await appdata.getHistoryVideos();
-            this.setState({videos});
+            this.setState({videos, focus: true});
+        });
+        this.props.navigation.addListener('willBlur', (route) => { 
+            this.setState({focus: false});
         });
     }
 
@@ -35,6 +39,7 @@ export default class History extends Component {
                         <VideoListItem
                             item={item}
                             onPress={()=>this.onPressItem(item)}
+                            focus={this.state.focus}
                         />
                     )}
                     keyExtractor={(item, index) => index.toString()}

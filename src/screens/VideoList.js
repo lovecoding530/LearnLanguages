@@ -17,13 +17,20 @@ export default class VideoList extends Component {
         this.state = {
             videos: [], 
             playlistId,
-            nextPageToken: "", 
+            nextPageToken: "",
+            focus: true,
         };
     }
 
     async componentDidMount() {
         let playlistItems = await api.getVideoItemsInPlaylist(this.state.playlistId);
         this.setState({videos: playlistItems.items, nextPageToken: playlistItems.nextPageToken});
+        this.props.navigation.addListener('willFocus', (route) => { 
+            this.setState({focus: true});
+        });
+        this.props.navigation.addListener('willBlur', (route) => { 
+            this.setState({focus: false});
+        });
     }
 
     onEndReached = async ()=>{
@@ -43,11 +50,13 @@ export default class VideoList extends Component {
             <View style={{flex: 1}}>
                 <FlatList
                     contentContainerStyle={styles.flatList}
+                    extraData={this.state}
                     data={this.state.videos}
                     renderItem={({item, index})=>(
                         <VideoListItem
                             item={item}
                             onPress={()=>this.onPressItem(item)}
+                            focus={this.state.focus}
                         />
                     )}
                     keyExtractor={(item, index) => index.toString()}

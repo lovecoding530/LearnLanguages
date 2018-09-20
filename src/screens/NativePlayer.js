@@ -70,8 +70,8 @@ export default class Player extends Component{
       nativeSubtitles: [], //video subtitle
       currentTargetSubtitle: {}, //transcription
       currentNativeSubtitles: [], //translation
-      showTranscription: true,
-      showTranslation: true,
+      showTranscription: false,
+      showTranslation: false,
       play: true,
       isReady: true,
       duration: 0,
@@ -96,6 +96,7 @@ export default class Player extends Component{
       appState: AppState.currentState,
       panelTop: height,
       modalVisible: false,
+      moreSub: false,
     };
   }
 
@@ -107,6 +108,7 @@ export default class Player extends Component{
     let subtitleTracks = await api.getSubtitleTracks(this.state.videoId);
     let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(targetLang));
     let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(nativeLang));
+    let moreSub = targetTracks.length > 1 || nativeTracks.length > 1;
 
     let selectedTracks = await appdata.getSelectedTracks(this.state.videoId);
     console.log("selectedTracks", selectedTracks);
@@ -125,6 +127,7 @@ export default class Player extends Component{
       videoInfo,
       videoTitle: videoInfo.title,
       subtitleTracks,
+      moreSub,
     });
 
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow);
@@ -148,7 +151,7 @@ export default class Player extends Component{
 
   _keyboardDidHide = (e) => {
     let panelTop = height - this.state.videoSize.height;
-    this.slidingUpPanel.transitionTo(panelTop);
+    this.slidingUpPanel.transitionTo(this.state.panelBottom);
     this.setState({isKeyboardOpen: false, panelTop});
   }
 
@@ -161,10 +164,6 @@ export default class Player extends Component{
       this.setState({play: false});
     }
     this.setState({appState: nextAppState});
-  }
-
-  async initFromSelectedTracks (targetTrack, nativeTrack) {
-    
   }
 
   getNativeSubtitlesForTarget(targetSubtitle){
@@ -353,8 +352,12 @@ export default class Player extends Component{
     let from = this.state.searchLang;
     let dest = (from == targetLang) ? nativeLang : targetLang;
     let dictionaryData = await api.getDictionaryData(from, dest, this.state.searchWord);
-    this.setState({dictionaryData});
-    this.dictionaryLiat.scrollToOffset({offset: 0});
+    if(dictionaryData){
+      this.setState({dictionaryData});
+      this.dictionaryLiat.scrollToOffset({offset: 0});  
+    }else{
+      alert("The glosbe server is down at the moment please check later.");
+    }
   }
 
   onFocusSearch = () => {
@@ -651,11 +654,14 @@ export default class Player extends Component{
             <View style={styles.transcription}>
               {this.state.showTranscription ?
                 <View style={{flexDirection: 'row'}}>
-                  <TouchableOpacity 
-                    style={{padding: 8}}
-                    onPress={()=>this.setState({modalVisible: true})}>
-                      <Icon name="cog" size={20} solid/>
-                  </TouchableOpacity>
+                  {this.state.moreSub ?
+                    <TouchableOpacity 
+                      style={{padding: 8}}
+                      onPress={()=>this.setState({modalVisible: true})}>
+                        <Icon name="cog" size={20} solid/>
+                    </TouchableOpacity> :
+                    <View style={{width: 36}}/>
+                  }
                   <ParsedText
                     style={[styles.caption, {flex: 1}]}
                     parse={
@@ -736,6 +742,7 @@ export default class Player extends Component{
                 <TextInput 
                   style={styles.search}
                   returnKeyType={'search'}
+                  blurOnSubmit={false} 
                   onChangeText={this.onChangeSearchText}
                   onSubmitEditing={this.onSearch}
                   onFocus={this.onFocusSearch}

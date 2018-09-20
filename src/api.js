@@ -37,7 +37,7 @@ async function getJSON(url, headers={}){
         let json = await response.json();
         return json;
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         return null;
     }
 }
