@@ -133,6 +133,10 @@ export default class Player extends Component{
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow);
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide);
     AppState.addEventListener('change', this._handleAppStateChange);
+
+    if(this.state.shared){
+      this.saveNewVideo(targetTracks, nativeTracks, this.state.videoId)
+    }
   }
 
   componentWillUnmount() {
@@ -165,7 +169,7 @@ export default class Player extends Component{
     }
     this.setState({appState: nextAppState});
   }
-
+ 
   getNativeSubtitlesForTarget(targetSubtitle){
     let nativeSubtitles = [];
     if(targetSubtitle){
@@ -358,7 +362,7 @@ export default class Player extends Component{
     }else{
       alert("The glosbe server is down at the moment please check later.");
     }
-  }
+  } 
 
   onFocusSearch = () => {
   }
@@ -501,6 +505,22 @@ export default class Player extends Component{
     }
     meaningStr = "<span class='meaningspan'>" + meaningStr + "</span>";
     return meaningStr;
+  }
+
+  saveNewVideo = async (targetTracks, nativeTracks, videoId) => {
+    let youtubeTargetTrack = targetTracks.find(track=>track.from=='youtube');
+    let available = false;
+    if(youtubeTargetTrack){
+      available = true;
+      await api.saveNewVideo(targetLang, '', videoId);
+    }
+    if(targetTracks.length > 0 && nativeTracks.length > 0){
+      available = true;
+      await api.saveNewVideo(targetLang, nativeLang, videoId);
+    }
+    if(!available){
+      alert('The video has not available subtitle tracks');
+    }
   }
 
   render() {
@@ -759,16 +779,16 @@ export default class Player extends Component{
                   style={styles.dictionaryList}
                   data={dicExamples.slice(0, 10)}
                   keyExtractor={(item, index)=>index.toString()}
-                  ListHeaderComponent={
-                    <HTML classesStyles={styles.dictionaryExampleStyles} html={this.getMeaningStr()}/>
-                  }
+                  // ListHeaderComponent={
+                  //   <HTML classesStyles={styles.dictionaryExampleStyles} html={this.getMeaningStr()}/>
+                  // }
                   ListFooterComponent={
                     <Text style={{width: '100%', textAlign: 'center', fontSize: 18,}}>courtesy of glosbe.com</Text>
                   }
                   renderItem={({item, index})=>(
                     <View style={styles.exampleListItem}>
-                      <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text'>" + item.first + '</span>'}/>
-                      <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text second'>" + item.second + '</span>'}/>
+                      {/* <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text'>" + item.first + '</span>'}/>
+                      <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text second'>" + item.second + '</span>'}/> */}
                     </View>
                   )}
                 />

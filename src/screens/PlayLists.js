@@ -3,6 +3,8 @@ import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 
 import PlayListItem from "../components/PlayListItem";
 import api from '../api';
 import { strings } from '../i18n';
+const targetLang = 'es';
+const nativeLang = 'en';
 
 export default class PlayLists extends Component {
     state = {
@@ -14,8 +16,14 @@ export default class PlayLists extends Component {
     }
 
     async componentDidMount() {
-        let channelId = (this.props.human) ? this.state.humanChannelId : this.state.autoChannelId;
-        // let channelId = await api.getChannelID(); 
+        // let channelId = (this.props.human) ? this.state.humanChannelId : this.state.autoChannelId;
+        let channelId = '';
+        if(this.props.human){
+            channelId = await api.getChannelID(targetLang, nativeLang); 
+        }else{
+            channelId = await api.getChannelID(targetLang); 
+        }
+
         this.setState({channelId});
 
         let playLists = await api.getPlaylistsInChannel(channelId);

@@ -66,7 +66,7 @@ async function postJSON(url, json) {
         let responseJson = await response.json();
         return responseJson;
     } catch (error) {
-        console.log("error", error);
+        console.error("post error", error);
     }
 }
 
@@ -77,7 +77,7 @@ async function getSubtitles(subtitles_uri, from){
             let parser = new DOMParser();
             let xml = parser.parseFromString(xmlStr, "text/xml");
             let json = xmlToJson(xml);
-            let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text]
+            let _texts = json.transcript.text instanceof Array ? json.transcript.text : [json.transcript.text];
             let subtitles = _texts.map((text, index) => ({
                 index,
                 start: parseFloat(text["@attributes"].start),
@@ -256,7 +256,7 @@ async function getSubtitleTracks(videoId){
 
 async function getSubtitlesFromTrack(track, tlang){
     let subtitles_uri = track.subtitles_uri;
-    if(tlang) subtitles_uri = `${track.subtitles_uri}&tlang=${tlang}`;
+    if(tlang) subtitles_uri = `${subtitles_uri}&tlang=${tlang}`;
     if(subtitles_uri){
         let subtitles = await getSubtitles(subtitles_uri, track.from);
         return subtitles;
@@ -264,9 +264,8 @@ async function getSubtitlesFromTrack(track, tlang){
     return null
 }
 
-
-async function getChannelID(targetLang, nativeLang){
-    let url = 'https://demo1204964.mockable.io/channel';
+async function getChannelID(targetLang, nativeLang = ''){
+    let url = `http://192.168.0.140:5000/channel?targetLang=${targetLang}&nativeLang=${nativeLang}`;
     let res = await getJSON(url);
     if(res){
         return res.channelId;
@@ -429,7 +428,15 @@ async function getDeciperSignature2(videoId, signature) {
 
 async function getDictionaryData(from, dest, phrase){
     let url = buildURL(API_DICTIONARY, {from, dest, phrase, format: 'json', pretty: true, tm: true});
+    console.log('getDictionaryData url', url);
     let res = await getJSON(url);
+    return res;
+}
+
+async function saveNewVideo(targetLang, nativeLang, videoId){
+    let url = `http://192.168.0.140:5000/saveNewVideo?community=true&targetLang=${targetLang}&nativeLang=${nativeLang}`;
+    console.log('saveNewVideo', url);
+    let res = await postJSON(url, {videoId});
     return res;
 }
 
@@ -457,5 +464,7 @@ export default {
     getDeciperSignature1,
     getDeciperSignature2,
     
-    getDictionaryData
+    getDictionaryData,
+
+    saveNewVideo,
 }

@@ -7,10 +7,15 @@ export default PlayListItem = (props) => {
     let thumbnailUrl = (item.snippet.thumbnails) ? Object.values(item.snippet.thumbnails)[0].url : FAV_ICON;
     return (
         <TouchableOpacity style={styles.item} onPress={onPress}>
-            <Image
-                style={styles.image}
-                source={{uri: thumbnailUrl}}
-            />
+            <View>
+                <Image
+                    style={styles.image}
+                    source={{uri: thumbnailUrl}}
+                />
+                <View style={styles.thumbnailOverlay}>
+                    <Text style={styles.count}>{item.contentDetails.itemCount}</Text>
+                </View>
+            </View>
             <View style={styles.titleView}>
                 <Text style={styles.title} numberOfLines={3}>{item.snippet.title}</Text>
                 {/* <Text style={styles.detail} numberOfLines={3}>{item.snippet.channelTitle}</Text> */}
@@ -44,5 +49,21 @@ const styles = {
     titleView: {
         flex: 1,
         marginHorizontal: 8,
+    },
+
+    thumbnailOverlay: {
+        backgroundColor: '#0006',
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+    },
+
+    count: {
+        color: '#fff',
+        position: 'absolute',
+        bottom: 4,
+        right: 4,
     }
 }
