@@ -779,16 +779,16 @@ export default class Player extends Component{
                   style={styles.dictionaryList}
                   data={dicExamples.slice(0, 10)}
                   keyExtractor={(item, index)=>index.toString()}
-                  // ListHeaderComponent={
-                  //   <HTML classesStyles={styles.dictionaryExampleStyles} html={this.getMeaningStr()}/>
-                  // }
+                  ListHeaderComponent={
+                    <HTML classesStyles={styles.dictionaryExampleStyles} html={this.getMeaningStr()}/>
+                  }
                   ListFooterComponent={
                     <Text style={{width: '100%', textAlign: 'center', fontSize: 18,}}>courtesy of glosbe.com</Text>
                   }
                   renderItem={({item, index})=>(
                     <View style={styles.exampleListItem}>
-                      {/* <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text'>" + item.first + '</span>'}/>
-                      <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text second'>" + item.second + '</span>'}/> */}
+                      <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text'>" + item.first + '</span>'}/>
+                      <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text second'>" + item.second + '</span>'}/>
                     </View>
                   )}
                 />
