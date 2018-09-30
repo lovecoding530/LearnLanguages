@@ -51,10 +51,11 @@ export default class Player extends Component{
     super(props);
 
     let {state: {params: {videoId, human, auto, shared, currentTime}}} = this.props.navigation;
-    currentTime = currentTime || 0;
+    this.currentTime = currentTime || 0;
+    let currentTimeInSec = parseInt(this.currentTime);
 
     this.state = {
-      human, 
+      human,
       auto,
       shared,
       videoId,
@@ -76,7 +77,7 @@ export default class Player extends Component{
       isReady: true,
       duration: 0,
       videoSize: {width: width, height: width * ( 9 / 16)},
-      currentTime,
+      currentTimeInSec,
       playAll: false,
       normalSpeed: true,
       showButtons: false,
@@ -139,11 +140,19 @@ export default class Player extends Component{
     }
   }
 
+  setCurrentTime(currentTime){
+    this.currentTime = currentTime;
+    let currentTimeInSec = parseInt(currentTime);
+    if(currentTimeInSec != this.state.currentTimeInSec){
+      this.setState({currentTimeInSec});
+    }
+  }
+
   componentWillUnmount() {
     if(this.keyboardDidShowListener) this.keyboardDidShowListener.remove();
     if(this.keyboardDidHideListener) this.keyboardDidHideListener.remove();
     AppState.removeEventListener('change', this._handleAppStateChange);
-    appdata.setCurrentTimeForHistoryVideo(this.state.videoId, this.state.currentTime);
+    appdata.setCurrentTimeForHistoryVideo(this.state.videoId, this.currentTime);
   }
 
   _keyboardDidShow = (e) => {
@@ -194,17 +203,19 @@ export default class Player extends Component{
     var currentTime = e.currentTime;
 
     if(!this.state.isDraggingSlide){
-      this.setState({currentTime});
+      this.setCurrentTime(currentTime);
     }
 
     if(this.state.playAll){
       let currentTargetSubtitle = this.state.targetSubtitles.find(subtitle=>subtitle.end>=currentTime);
       let currentNativeSubtitles = this.getNativeSubtitlesForTarget(currentTargetSubtitle);
       
-      this.setState({
-        currentTargetSubtitle: currentTargetSubtitle || {},
-        currentNativeSubtitles,
-      });
+      if(currentTargetSubtitle != this.state.currentTargetSubtitle){
+        this.setState({
+          currentTargetSubtitle: currentTargetSubtitle || {},
+          currentNativeSubtitles,
+        });  
+      }
     }else{
       if(currentTime >= this.state.currentTargetSubtitle.end){
         this.setState({play: false});
@@ -283,8 +294,8 @@ export default class Player extends Component{
     let videoHeight = naturalSize.height * (width / naturalSize.width)
     this.setState({isLoaded: true, duration, videoSize: {width, height: videoHeight}, panelTop: height - videoHeight});
     if(this.state.playAll == false){
-      if(this.state.currentTime > 0) {
-        this.toSceneTime(this.state.currentTime);
+      if(this.currentTime > 0) {
+        this.toSceneTime(this.currentTime);
       }else{
         this.player.seek(this.state.currentTargetSubtitle.start);
       }
@@ -301,7 +312,8 @@ export default class Player extends Component{
   }
 
   onSlideValueChange = (value) => {
-    this.setState({isDraggingSlide: true, currentTime: value});
+    this.setState({isDraggingSlide: true});
+    this.setCurrentTime(value);
   }
 
   onModeSwitchChanged = (value) => {
@@ -320,7 +332,7 @@ export default class Player extends Component{
     if(this.state.playAll){
       this.setState({showButtons: !this.state.showButtons});
     }else{
-      if(this.state.currentTime < this.state.currentTargetSubtitle.end){
+      if(this.currentTime < this.state.currentTargetSubtitle.end){
         this.setState({play: !this.state.play});
       }
     }
@@ -418,14 +430,14 @@ export default class Player extends Component{
   }
 
   onBack5 = () => {
-    let back5 = this.state.currentTime - 5;
+    let back5 = this.currentTime - 5;
     if(back5 < 0) back5 = 0;
     this.player.seek(back5);
     this.setState({play: true});
   }
 
   onForward5 = () => {
-    let forward5 = this.state.currentTime + 5;
+    let forward5 = this.currentTime + 5;
     if(forward5 > this.state.duration) forward5 = duration;
     this.player.seek(forward5);
     this.setState({play: true});
@@ -646,14 +658,14 @@ export default class Player extends Component{
                 }
                 <View style={styles.playerBottomBar}>
                   <View style={styles.sliderBar}>
-                    <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.currentTime)}</Text>
+                    <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.currentTimeInSec)}</Text>
                     <Slider 
                       style={styles.playerSlider}
                       onSlidingComplete={this.onSlidingComplete}
                       onValueChange={this.onSlideValueChange}
                       maximumValue={this.state.duration}
                       minimumValue={0}
-                      value={this.state.currentTime}
+                      value={this.state.currentTimeInSec}
                       maximumTrackTintColor='#fff'
                     />
                     <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.duration)}</Text>
