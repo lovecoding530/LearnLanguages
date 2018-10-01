@@ -24,6 +24,8 @@ import {
   FlatList,
   Image,
   AppState,
+  Share,
+  Clipboard
 } from 'react-native';
 import api, {GOOGLE_API_KEY} from '../api';
 import Video from 'react-native-video';
@@ -494,31 +496,6 @@ export default class Player extends Component{
     this.setState({modalVisible: false});
   }
 
-  getMeaningStr(){
-    let meaningStr = "";
-    let {tuc} = this.state.dictionaryData;
-    if(tuc){
-      let _tuc = tuc.slice(0, 7);
-      _tuc.forEach((item, index) => {
-        let itemStr = (index + 1) + ". ";
-        if(item.meanings){
-          let meaning = item.meanings.find(meaning=>meaning.language==this.state.searchLang);
-          if(meaning) {
-            itemStr = itemStr + meaning.text + ": ";
-          }
-        }
-        if(item.phrase){
-          itemStr = itemStr + "<strong class='meaning'>" + item.phrase.text + "</strong>";
-        }
-        if(itemStr){
-          meaningStr = meaningStr + itemStr + "<br/>";
-        }
-      });
-    }
-    meaningStr = "<span class='meaningspan'>" + meaningStr + "</span>";
-    return meaningStr;
-  }
-
   saveNewVideo = async (targetTracks, nativeTracks, videoId) => {
     let youtubeTargetTrack = targetTracks.find(track=>track.from=='youtube');
     let available = false;
@@ -535,10 +512,27 @@ export default class Player extends Component{
     }
   }
 
+  onShareScene = async () => {
+    let start = Math.floor(this.state.currentTargetSubtitle.start);
+    let end = Math.ceil(this.state.currentTargetSubtitle.end);
+    let shareUrl = `https://www.youtube.com/embed/${this.state.videoId}?start=${start}&end=${end}`;
+    try {
+      let res = await Share.share({
+        title: 'Shared Scene',
+        message: shareUrl,
+      });
+      if(res.action == 'sharedAction'){
+        alert('Successfully shared');
+      }        
+    } catch (error) {
+      console.log('an error happens to share the url');
+    }
+    Clipboard.setString(shareUrl);
+  }
+
   render() {
     let currentTargetSubtitleText = this.state.currentTargetSubtitle ? this.state.currentTargetSubtitle.text || "" : "";
     currentTargetSubtitleText = strip(currentTargetSubtitleText);
-    let {examples: dicExamples} = this.state.dictionaryData;
     let isFlagged = this.state.flaggedScenes.indexOf(this.state.currentTargetSubtitle.index) > -1;
     return (
       <View style={styles.container}>
@@ -670,6 +664,12 @@ export default class Player extends Component{
                     />
                     <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.duration)}</Text>
                   </View>
+                  <TouchableOpacity 
+                      style={{padding: 8}}
+                      onPress={this.onShareScene}
+                    >
+                        <Icon name="copy" size={16} color='#fff' regular/>
+                  </TouchableOpacity>
                 </View>
               </View>
               }
@@ -785,26 +785,10 @@ export default class Player extends Component{
                   <Text style={styles.searchLangText}>{this.state.searchLang.toUpperCase()}</Text>
                 </TouchableOpacity>
               </View>
-              {dicExamples &&
-                <FlatList
-                  ref={ref=>this.dictionaryLiat=ref}
-                  style={styles.dictionaryList}
-                  data={dicExamples.slice(0, 10)}
-                  keyExtractor={(item, index)=>index.toString()}
-                  ListHeaderComponent={
-                    <HTML classesStyles={styles.dictionaryExampleStyles} html={this.getMeaningStr()}/>
-                  }
-                  ListFooterComponent={
-                    <Text style={{width: '100%', textAlign: 'center', fontSize: 18,}}>courtesy of glosbe.com</Text>
-                  }
-                  renderItem={({item, index})=>(
-                    <View style={styles.exampleListItem}>
-                      <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text'>" + item.first + '</span>'}/>
-                      <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text second'>" + item.second + '</span>'}/>
-                    </View>
-                  )}
-                />
-              }
+              <DictionaryList 
+                dictionaryData={this.state.dictionaryData}
+                searchLang={this.state.searchLang}
+              />
             </View>
           </View>
         </SlidingUpPanel>
@@ -820,6 +804,58 @@ export default class Player extends Component{
         }
       </View>
     );
+  }
+}
+
+class DictionaryList extends React.PureComponent{
+
+  getMeaningStr(){
+    let meaningStr = "";
+    let {tuc} = this.props.dictionaryData;
+    if(tuc){
+      let _tuc = tuc.slice(0, 7);
+      _tuc.forEach((item, index) => {
+        let itemStr = (index + 1) + ". ";
+        if(item.meanings){
+          let meaning = item.meanings.find(meaning=>meaning.language==this.props.searchLang);
+          if(meaning) {
+            itemStr = itemStr + meaning.text + ": ";
+          }
+        }
+        if(item.phrase){
+          itemStr = itemStr + "<strong class='meaning'>" + item.phrase.text + "</strong>";
+        }
+        if(itemStr){
+          meaningStr = meaningStr + itemStr + "<br/>";
+        }
+      });
+    }
+    meaningStr = "<span class='meaningspan'>" + meaningStr + "</span>";
+    return meaningStr;
+  }
+
+  render(){
+    let {examples: dicExamples} = this.props.dictionaryData;
+    return (
+      <FlatList
+        ref={ref=>this.dictionaryLiat=ref}
+        style={styles.dictionaryList}
+        data={dicExamples}
+        ListHeaderComponent={
+          <HTML classesStyles={styles.dictionaryExampleStyles} html={this.getMeaningStr()}/>
+        }
+        keyExtractor={(item, index)=>index.toString()}
+        ListFooterComponent={
+          <Text style={{width: '100%', textAlign: 'center', fontSize: 18,}}>courtesy of glosbe.com</Text>
+        }
+        renderItem={({item, index})=>(
+          <View style={styles.exampleListItem}>
+            <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text'>" + item.first + '</span>'}/>
+            <HTML classesStyles={styles.dictionaryExampleStyles} html={"<span class='text second'>" + item.second + '</span>'}/>
+          </View>
+        )}
+      />
+    )
   }
 }
 
@@ -903,7 +939,9 @@ const styles = {
 
   sliderBar: {
     flexDirection: 'row',
-    width: '100%',
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8
   },
 
   playerSlider: {
@@ -914,7 +952,7 @@ const styles = {
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    padding: 8
+    flexDirection: 'row'
   },
 
   playerTopBar: {
