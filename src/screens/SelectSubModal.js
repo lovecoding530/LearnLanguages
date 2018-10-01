@@ -13,7 +13,7 @@ export default class SelectSubModal extends Component {
         nativeTracks: [],
     }
 
-    componentWillReceiveProps () {
+    componentDidMount () {
         let {subtitleTracks, targetTrack, nativeTrack} = this.props;
 
         let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(targetLang));

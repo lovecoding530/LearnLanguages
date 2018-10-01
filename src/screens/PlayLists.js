@@ -16,13 +16,13 @@ export default class PlayLists extends Component {
     }
 
     async componentDidMount() {
-        // let channelId = (this.props.human) ? this.state.humanChannelId : this.state.autoChannelId;
-        let channelId = '';
-        if(this.props.human){
-            channelId = await api.getChannelID(targetLang, nativeLang); 
-        }else{
-            channelId = await api.getChannelID(targetLang); 
-        }
+        let channelId = (this.props.human) ? this.state.humanChannelId : this.state.autoChannelId;
+        // let channelId = '';
+        // if(this.props.human){
+        //     channelId = await api.getChannelID(targetLang, nativeLang); 
+        // }else{
+        //     channelId = await api.getChannelID(targetLang); 
+        // }
 
         this.setState({channelId});
 
