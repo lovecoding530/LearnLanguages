@@ -58,12 +58,12 @@ const styles = {
         right: 0,
         bottom: 0,
         left: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 
     count: {
         color: '#fff',
-        position: 'absolute',
-        bottom: 4,
-        right: 4,
+        fontSize: 24,
     }
 }

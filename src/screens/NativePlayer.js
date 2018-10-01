@@ -24,7 +24,7 @@ import {
   FlatList,
   Image,
   AppState,
-  Share,
+  Alert,
   Clipboard
 } from 'react-native';
 import api, {GOOGLE_API_KEY} from '../api';
@@ -221,8 +221,32 @@ export default class Player extends Component{
     }else{
       if(currentTime >= this.state.currentTargetSubtitle.end){
         this.setState({play: false});
+        if(this.state.currentTargetSubtitle.index ==  this.state.targetSubtitles.length - 1){
+          this.onEnd();
+        }
       }
     }
+  }
+
+  onEnd = () => {
+    Alert.alert(
+      "Ended", 
+      "You have reached the end, would you like to restart?", [
+        {
+          text: 'Cancel', onPress: ()=>{
+          }
+        },{
+          text: 'OK', onPress: ()=>{
+            this.setCurrentTime(0);
+            if(this.state.playAll){
+              this.player.seek(0);
+            }else{
+              this.toSceneTime(0);
+            }
+          }
+        }
+      ]
+    )
   }
 
   onPressedShowTranscription = () => {
@@ -372,11 +396,11 @@ export default class Player extends Component{
     let dictionaryData = await api.getDictionaryData(from, dest, this.state.searchWord);
     if(dictionaryData){
       this.setState({dictionaryData});
-      this.dictionaryLiat.scrollToOffset({offset: 0});  
+      this.dictionaryList.scrollToTop();  
     }else{
       alert("The glosbe server is down at the moment please check later.");
     }
-  } 
+  }
 
   onFocusSearch = () => {
   }
@@ -777,6 +801,7 @@ export default class Player extends Component{
                 </TouchableOpacity>
               </View>
               <DictionaryList 
+                ref={ref=>this.dictionaryList=ref}
                 dictionaryData={this.state.dictionaryData}
                 searchLang={this.state.searchLang}
               />
@@ -825,11 +850,15 @@ class DictionaryList extends React.PureComponent{
     return meaningStr;
   }
 
+  scrollToTop(){
+    this.dictionaryList.scrollToOffset({offset: 0}); 
+  }
+
   render(){
     let {examples: dicExamples} = this.props.dictionaryData;
     return (
       <FlatList
-        ref={ref=>this.dictionaryLiat=ref}
+        ref={ref=>this.dictionaryList=ref}
         style={styles.dictionaryList}
         data={dicExamples}
         ListHeaderComponent={

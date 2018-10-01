@@ -40,9 +40,11 @@ export default class VideoList extends Component {
     }
 
     onPressItem = async (item) => {
+        let currentTime = await appdata.getCurrentTimeForHistoryVideo(item.id);
+        console.log({currentTime});
         await appdata.addHistoryVideo(item);
         let {navigate, state: {params: {human, auto}}} = this.props.navigation;
-        navigate('Player', {videoId: item.id, human, auto});
+        navigate('Player', {videoId: item.id, human, auto, currentTime});
     }
 
     render(){
