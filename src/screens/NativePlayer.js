@@ -515,19 +515,10 @@ export default class Player extends Component{
   onShareScene = async () => {
     let start = Math.floor(this.state.currentTargetSubtitle.start);
     let end = Math.ceil(this.state.currentTargetSubtitle.end);
-    let shareUrl = `https://www.youtube.com/embed/${this.state.videoId}?start=${start}&end=${end}`;
-    try {
-      let res = await Share.share({
-        title: 'Shared Scene',
-        message: shareUrl,
-      });
-      if(res.action == 'sharedAction'){
-        alert('Successfully shared');
-      }        
-    } catch (error) {
-      console.log('an error happens to share the url');
-    }
+    // let shareUrl = `https://www.youtube.com/embed/${this.state.videoId}?start=${start}&end=${end}`;
+    let shareUrl = `https://www.youtube.com/watch?v=${this.state.videoId}&t=${start}`;
     Clipboard.setString(shareUrl);
+    alert('The Youtube link for this scene has been copied to your clipboard');
   }
 
   render() {
