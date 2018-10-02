@@ -100,6 +100,7 @@ export default class Player extends Component{
       panelTop: height,
       modalVisible: false,
       moreSub: false,
+      allowDragging: false,
     };
   }
 
@@ -773,7 +774,7 @@ export default class Player extends Component{
           visible={true}
           startCollapsed={true}
           showBackdrop={false}
-          allowDragging={true}
+          allowDragging={this.state.allowDragging}
           draggableRange={{
             top: this.state.panelTop,
             bottom: PANEL_BOTTOM,
@@ -784,22 +785,25 @@ export default class Player extends Component{
         >
           <View style={styles.panel}>
             <View style={{height: this.state.panelPosition}}>
-              <View style={styles.panelHeader}>
-                <Image source={require('../assets/glosbe.png')} style={{width: 36, height: 36, marginRight: 12}}/>
-                <TextInput 
-                  style={styles.search}
-                  returnKeyType={'search'}
-                  blurOnSubmit={false} 
-                  onChangeText={this.onChangeSearchText}
-                  onSubmitEditing={this.onSearch}
-                  onFocus={this.onFocusSearch}
-                  underlineColorAndroid='#fff'
-                  selectionColor='#fff'
-                  value={this.state.searchWord}/>
-                <TouchableOpacity style={styles.searchLangBtn} onPress={this.onToggleSearchLang}>
-                  <Text style={styles.searchLangText}>{this.state.searchLang.toUpperCase()}</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableWithoutFeedback onPressIn={()=>this.setState({allowDragging: true})} onPressOut={()=>this.setState({allowDragging: false})}>
+                <View style={styles.panelHeader}>
+                  <Image source={require('../assets/glosbe.png')} style={{width: 36, height: 36, marginRight: 12}}/>
+                  <TextInput 
+                    style={styles.search}
+                    returnKeyType={'search'}
+                    blurOnSubmit={false} 
+                    onChangeText={this.onChangeSearchText}
+                    onSubmitEditing={this.onSearch}
+                    onFocus={this.onFocusSearch}
+                    underlineColorAndroid='#fff'
+                    selectionColor='#fff'
+                    value={this.state.searchWord}/>
+                  <TouchableOpacity style={styles.searchLangBtn} onPress={this.onToggleSearchLang}>
+                    <Text style={styles.searchLangText}>{this.state.searchLang.toUpperCase()}</Text>
+                  </TouchableOpacity>
+                </View>
+
+              </TouchableWithoutFeedback>
               <DictionaryList 
                 ref={ref=>this.dictionaryList=ref}
                 dictionaryData={this.state.dictionaryData}
