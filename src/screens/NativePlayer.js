@@ -222,9 +222,46 @@ export default class Player extends Component{
     }else{
       if(currentTime >= this.state.currentTargetSubtitle.end){
         this.setState({play: false});
-        if(this.state.currentTargetSubtitle.index ==  this.state.targetSubtitles.length - 1){
-          this.onEnd();
-        }
+        this.checkEnd();
+      }
+    }
+  }
+
+  checkEnd = () => {
+    if(this.state.reviewMode){
+      if(this.state.currentReviewScene == this.state.flaggedScenes.length - 1){
+        Alert.alert(
+          "Ended", 
+          "You have reached the last flagged scene, would you like to restart?", [
+            {
+              text: 'Cancel', 
+            },{
+              text: 'OK', 
+              onPress: ()=>{
+                this.setCurrentTime(0);
+                this.setState({currentReviewScene: 0});
+                this.toSceneIndex(this.state.flaggedScenes[0]);
+              }
+            }
+          ]
+        )
+      }
+    }else{
+      if(this.state.currentTargetSubtitle.index ==  this.state.targetSubtitles.length - 1){
+        Alert.alert(
+          "Ended", 
+          "You have reached the last scene, would you like to restart?", [
+            {
+              text: 'Cancel', 
+            },{
+              text: 'OK', 
+              onPress: ()=>{
+                this.setCurrentTime(0);
+                this.toSceneIndex(0);
+              }
+            }
+          ]
+        )          
       }
     }
   }
@@ -241,8 +278,6 @@ export default class Player extends Component{
             this.setCurrentTime(0);
             if(this.state.playAll){
               this.player.seek(0);
-            }else{
-              this.toSceneTime(0);
             }
           }
         }
@@ -432,11 +467,12 @@ export default class Player extends Component{
 
   onToggleReviewMode = () => {
     let reviewMode = !this.state.reviewMode;
-    let playAll = (reviewMode) ? false: this.state.playAll;
-    this.setState({reviewMode, playAll});
     if(reviewMode){
       if(this.state.flaggedScenes.length == 0) return;
-      this.toSceneIndex(this.state.flaggedScenes[0]);
+      this.setState({reviewMode, playAll: false});
+      this.toSceneIndex(this.state.flaggedScenes[0]);  
+    }else{
+      this.setState({reviewMode});
     }
   }
 
