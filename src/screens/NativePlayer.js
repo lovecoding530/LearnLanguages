@@ -427,6 +427,9 @@ export default class Player extends Component{
   }
 
   search = async () => {
+    if(this.state.playAll){
+      this.setState({play: false});
+    }
     let from = this.state.searchLang;
     let dest = (from == targetLang) ? nativeLang : targetLang;
     let dictionaryData = await api.getDictionaryData(from, dest, this.state.searchWord);
@@ -574,11 +577,12 @@ export default class Player extends Component{
   }
 
   onShareScene = async () => {
+    let targetSubtitleText = this.state.currentTargetSubtitle.text;
     let start = Math.floor(this.state.currentTargetSubtitle.start);
     let end = Math.ceil(this.state.currentTargetSubtitle.end);
     // let shareUrl = `https://www.youtube.com/embed/${this.state.videoId}?start=${start}&end=${end}`;
     let shareUrl = `https://www.youtube.com/watch?v=${this.state.videoId}&t=${start}`;
-    Clipboard.setString(shareUrl);
+    Clipboard.setString(shareUrl + '\n' + targetSubtitleText);
     alert('The Youtube link for this scene has been copied to your clipboard');
   }
 
