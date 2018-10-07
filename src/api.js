@@ -53,13 +53,14 @@ async function getText(url){
     }
 }
 
-async function postJSON(url, json) {
+async function postJSON(url, json, headers) {
     try {
         let response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
+                ...headers
             },
             body: JSON.stringify(json),
         });
@@ -265,7 +266,9 @@ async function getSubtitlesFromTrack(track, tlang){
 }
 
 async function getChannelID(targetLang, nativeLang = ''){
-    let url = `http://192.168.0.140:5000/channel?targetLang=${targetLang}&nativeLang=${nativeLang}`;
+    //https://s8b09z9b83.execute-api.us-east-1.amazonaws.com/default/GetChannel?targetLang=fr
+
+    let url = `https://s8b09z9b83.execute-api.us-east-1.amazonaws.com/default/GetChannel?targetLang=${targetLang}&nativeLang=${nativeLang}`;
     let res = await getJSON(url);
     if(res){
         return res.channelId;
@@ -434,9 +437,13 @@ async function getDictionaryData(from, dest, phrase){
 }
 
 async function saveNewVideo(targetLang, nativeLang, videoId){
-    let url = `http://192.168.0.140:5000/saveNewVideo?community=true&targetLang=${targetLang}&nativeLang=${nativeLang}`;
+    //https://g6lolw9hdf.execute-api.us-east-1.amazonaws.com/default/saveVideo?targetLang=en&nativeLang=hi
+    let url = `https://g6lolw9hdf.execute-api.us-east-1.amazonaws.com/default/saveVideo?community=true&targetLang=${targetLang}&nativeLang=${nativeLang}`;
     console.log('saveNewVideo', url);
-    let res = await postJSON(url, {videoId});
+    let headers = {
+        'x-api-key': 'd1spBCmHTI18bvppZAXYqaf1nh1hMdqT17fGOin0'
+    }
+    let res = await postJSON(url, {videoId}, headers);
     return res;
 }
 
