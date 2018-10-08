@@ -34,14 +34,12 @@ import { timeStringFromSeconds, strip } from '../utils';
 import ParsedText from 'react-native-parsed-text';
 import SlidingUpPanel from 'rn-sliding-up-panel'
 import HTML from 'react-native-render-html';
-import appdata from '../appdata';
+import appdata, {TARGET_LANG, NATIVE_LANG} from '../appdata';
 import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
 import Segment from 'react-native-segmented-control-tab'
 
-const videoId = "kw2OFJeRIZ8"; 
-const targetLang = 'es';
-const nativeLang = 'en';
+const videoId = "kw2OFJeRIZ8";
 const {width, height} = Dimensions.get('window')
 
 const PANEL_HEADER_HEIGHT = 48;
@@ -86,7 +84,7 @@ export default class Player extends Component{
       searchWord: '',
       dictionaryData: {},
       allowDragging: true,
-      searchLang: targetLang,
+      searchLang: TARGET_LANG,
       isLoaded: false,
       panelBottom: PANEL_BOTTOM,
       panelPosition: PANEL_BOTTOM,
@@ -110,8 +108,8 @@ export default class Player extends Component{
     console.log('videoUrl', videoUrl);
 
     let subtitleTracks = await api.getSubtitleTracks(this.state.videoId);
-    let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(targetLang));
-    let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(nativeLang));
+    let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(TARGET_LANG));
+    let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(NATIVE_LANG));
     let moreSub = targetTracks.length > 1 || nativeTracks.length > 1;
 
     let selectedTracks = await appdata.getSelectedTracks(this.state.videoId);
@@ -401,13 +399,13 @@ export default class Player extends Component{
   }
 
   onPressTargetWord = async (word) => {
-    this.setState({searchLang: targetLang, searchWord: word}, async ()=>{
+    this.setState({searchLang: TARGET_LANG, searchWord: word}, async ()=>{
       await this.search();
     });
   }
 
   onPressNativeWord = async (word) => {
-    this.setState({searchLang: nativeLang, searchWord: word}, async ()=>{
+    this.setState({searchLang: NATIVE_LANG, searchWord: word}, async ()=>{
       await this.search();
     });
   }
@@ -421,7 +419,7 @@ export default class Player extends Component{
   }
 
   onToggleSearchLang = () => {
-    let searchLang = (this.state.searchLang == targetLang) ? nativeLang : targetLang;
+    let searchLang = (this.state.searchLang == TARGET_LANG) ? NATIVE_LANG : TARGET_LANG;
     console.log(searchLang);
     this.setState({searchLang});
   }
@@ -431,7 +429,7 @@ export default class Player extends Component{
       this.setState({play: false});
     }
     let from = this.state.searchLang;
-    let dest = (from == targetLang) ? nativeLang : targetLang;
+    let dest = (from == TARGET_LANG) ? NATIVE_LANG : TARGET_LANG;
     let dictionaryData = await api.getDictionaryData(from, dest, this.state.searchWord);
     if(dictionaryData){
       this.setState({dictionaryData});
@@ -514,11 +512,11 @@ export default class Player extends Component{
     if(targetTrack){
       if(this.state.auto){
         nativeTrack = targetTrack;
-        tlang = nativeLang;
+        tlang = NATIVE_LANG;
       }else{
         if(this.state.shared && !nativeTrack){
           nativeTrack = targetTrack;
-          tlang = nativeLang;
+          tlang = NATIVE_LANG;
         }
       }
     }
@@ -565,11 +563,11 @@ export default class Player extends Component{
     let available = false;
     if(youtubeTargetTrack){
       available = true;
-      await api.saveNewVideo(targetLang, '', videoId);
+      await api.saveNewVideo(TARGET_LANG, '', videoId);
     }
     if(targetTracks.length > 0 && nativeTracks.length > 0){
       available = true;
-      await api.saveNewVideo(targetLang, nativeLang, videoId);
+      await api.saveNewVideo(TARGET_LANG, NATIVE_LANG, videoId);
     }
     if(!available){
       alert('The video has not available subtitle tracks');

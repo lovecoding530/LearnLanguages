@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 
 export const FAV_ICON = "https://facebook.github.io/react-native/docs/assets/favicon.png";
+export const TARGET_LANG = 'es';
+export const NATIVE_LANG = 'en';
 
 async function getItem(key){
     const valueStr = await AsyncStorage.getItem(key)
