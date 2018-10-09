@@ -6,7 +6,7 @@ import {
   Image,
   Text,
 } from 'react-native';
-import appdata from '../appdata';
+import appdata, {APP_NAME} from '../appdata';
 import * as RNIap from 'react-native-iap';
 
 const FREE_USE_TIME = 1 * 60 * 60;
@@ -61,7 +61,7 @@ export default class Splash extends Component {
         return (
             <View style={styles.container}>
                 <Image source={require('../assets/logo.png')} style={styles.logo}/>
-                <Text style={styles.title}>Scene by Scene - Spanish</Text>
+                <Text style={styles.title}>{APP_NAME}</Text>
                 <Text style={styles.detail}>Making Authentic Language Accessible</Text>
             </View>
         );

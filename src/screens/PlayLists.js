@@ -3,7 +3,7 @@ import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 
 import PlayListItem from "../components/PlayListItem";
 import api from '../api';
 import { strings } from '../i18n';
-import {TARGET_LANG, NATIVE_LANG} from '../appdata';
+import {TARGET_LANG, NATIVE_LANG, APP_NAME} from '../appdata';
 
 export default class PlayLists extends Component {
     state = {
@@ -45,7 +45,7 @@ export default class PlayLists extends Component {
             <View style={{flex: 1}}>
                 <View style={styles.nav}>
                     <Image source={require('../assets/logo.png')} style={styles.navIcon}/>
-                    <Text style={styles.navTitle}>{strings('Scene by Scene - Spanish')}</Text>
+                    <Text style={styles.navTitle}>{APP_NAME}</Text>
                 </View>
                 <FlatList
                     contentContainerStyle={styles.FlatList}
