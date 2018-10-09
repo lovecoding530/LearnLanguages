@@ -580,7 +580,7 @@ export default class Player extends Component{
     let end = Math.ceil(this.state.currentTargetSubtitle.end);
     let shareUrl = `https://www.youtube.com/watch?v=${this.state.videoId}&t=${start}`;
     Clipboard.setString(shareUrl + '\n' + targetSubtitleText);
-    alert('The Youtube link for this scene has been copied to your clipboard');
+    Alert.alert('Scene Copied to Clipboard', 'The Youtube link for this scene has been copied to your clipboard');
   }
 
   render() {
@@ -895,7 +895,9 @@ class DictionaryList extends React.PureComponent{
   }
 
   render(){
-    let {examples: dicExamples} = this.props.dictionaryData;
+    let dicExamples = this.props.dictionaryData.examples || [];
+    dicExamples.sort((a, b)=>a.first.length - b.first.length);
+    dicExamples = dicExamples.slice(0, 15);
     return (
       <FlatList
         ref={ref=>this.dictionaryList=ref}
