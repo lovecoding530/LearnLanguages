@@ -7,19 +7,29 @@ import {
   Text,
 } from 'react-native';
 import appdata, {APP_NAME} from '../appdata';
+import {currentLocaleTwoLetters} from '../i18n';
 import * as RNIap from 'react-native-iap';
+import SelectLangModal from './SelectLangModal';
 
 const FREE_USE_TIME = 1 * 60 * 60;
 
 export default class Splash extends Component {
+    state = {
+        visibleModal: false,
+    }
+
     async componentDidMount() {
         let start = new Date();
         let res = await this.checkPurchase();
         let end = new Date();
         if(res){
             let diff = end - start;
-            setTimeout(()=>{
-                this.props.navigation.navigate('MainStack');
+            setTimeout(async ()=>{
+                if(await appdata.getNativeLang()){
+                    this.props.navigation.navigate('MainStack');
+                }else{
+                    this.setState({visibleModal: true});
+                }
             }, 2000 - diff);
         }
     }
@@ -56,13 +66,31 @@ export default class Splash extends Component {
             return true;
         }
     }
-    
+
+    onSelectLang = async (selectedLang) => {
+        console.log({selectedLang});
+        if(selectedLang){
+            await appdata.setNativeLang(selectedLang);
+            this.setState({visibleModal: false});
+            this.props.navigation.navigate('MainStack');    
+        }
+    }
+
+    onCancelSelectLang = () => {
+        this.setState({visibleModal: false});
+    }
+
     render() {
         return (
             <View style={styles.container}>
                 <Image source={require('../assets/logo.png')} style={styles.logo}/>
                 <Text style={styles.title}>{APP_NAME}</Text>
                 <Text style={styles.detail}>Making Authentic Language Accessible</Text>
+                <SelectLangModal 
+                    visible={this.state.visibleModal}
+                    onCancel={this.onCancelSelectLang}
+                    onOK={this.onSelectLang}
+                />
             </View>
         );
     }

@@ -3,7 +3,7 @@ import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 
 import PlayListItem from "../components/PlayListItem";
 import api from '../api';
 import { strings } from '../i18n';
-import {TARGET_LANG, NATIVE_LANG, APP_NAME} from '../appdata';
+import appdata, {TARGET_LANG, APP_NAME} from '../appdata';
 
 export default class PlayLists extends Component {
     state = {
@@ -18,6 +18,7 @@ export default class PlayLists extends Component {
         // let channelId = (this.props.human) ? this.state.humanChannelId : this.state.autoChannelId;
         let channelId = '';
         if(this.props.human){
+            const NATIVE_LANG = await appdata.getNativeLang();
             channelId = await api.getChannelID(TARGET_LANG, NATIVE_LANG); 
         }else{
             channelId = await api.getChannelID(TARGET_LANG); 

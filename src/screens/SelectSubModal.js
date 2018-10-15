@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity, Modal, Picker, TouchableWithoutFeedback} from 'react-native';
 import api from '../api';
 import { strings } from '../i18n';
-import {TARGET_LANG, NATIVE_LANG} from '../appdata';
+import appdata, {TARGET_LANG} from '../appdata';
 
 export default class SelectSubModal extends Component {
     state={
@@ -12,9 +12,9 @@ export default class SelectSubModal extends Component {
         nativeTracks: [],
     }
 
-    componentDidMount () {
+    async componentDidMount () {
         let {subtitleTracks, targetTrack, nativeTrack} = this.props;
-
+        const NATIVE_LANG = await appdata.getNativeLang();
         let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(TARGET_LANG));
         let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(NATIVE_LANG));
 

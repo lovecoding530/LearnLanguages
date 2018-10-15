@@ -34,7 +34,7 @@ import { timeStringFromSeconds, strip } from '../utils';
 import ParsedText from 'react-native-parsed-text';
 import SlidingUpPanel from 'rn-sliding-up-panel'
 import HTML from 'react-native-render-html';
-import appdata, {TARGET_LANG, NATIVE_LANG} from '../appdata';
+import appdata, {TARGET_LANG} from '../appdata';
 import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
 import Segment from 'react-native-segmented-control-tab'
@@ -42,6 +42,7 @@ import Segment from 'react-native-segmented-control-tab'
 const videoId = "kw2OFJeRIZ8";
 const {width, height} = Dimensions.get('window')
 
+let NATIVE_LANG = 'en';
 const PANEL_HEADER_HEIGHT = 48;
 const PANEL_BOTTOM = PANEL_HEADER_HEIGHT + 22;
 
@@ -103,6 +104,7 @@ export default class Player extends Component{
   }
 
   async componentDidMount() {
+    NATIVE_LANG = await appdata.getNativeLang();
     let videoInfo = await api.getYoutubeVideoInfo(this.state.videoId);
     let videoUrl = await api.getYoutubeVideoDownloadUrl(this.state.videoId, videoInfo);
     console.log('videoUrl', videoUrl);

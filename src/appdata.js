@@ -3,12 +3,30 @@ import {
     Platform,
     AsyncStorage
 } from 'react-native';
+import {currentLocaleTwoLetters} from './i18n';
 
 export const FAV_ICON = "https://facebook.github.io/react-native/docs/assets/favicon.png";
-export const TARGET_LANG = 'fr';
+export const TARGET_LANG = 'en';
 export const NATIVE_LANG = 'en';
 export const APP_NAME = 'Scene by Scene - Spanish';
-
+export const LANGUAGES = [
+    {
+        text: 'Español',
+        code: 'es'
+    },
+    {
+        text: 'Français',
+        code: 'fr'
+    },
+    {
+        text: 'हिन्दी',
+        code: 'hi'
+    },
+    {
+        text: 'العربية',
+        code: 'ar'
+    },
+]
 async function getItem(key){
     const valueStr = await AsyncStorage.getItem(key)
     try {
@@ -79,6 +97,23 @@ async function setSelectedTracks(videoId, target, native){
     await setItem(key, {target, native});
 }
 
+async function getNativeLang(){
+    if(TARGET_LANG == 'en'){
+        if(LANGUAGES.find(lang=>lang.code==currentLocaleTwoLetters)){
+            return currentLocaleTwoLetters;
+        }else{
+            let nativeLang = await getItem('NATIVE_LANG');
+            return nativeLang;    
+        }
+    }else{
+        return NATIVE_LANG;
+    }
+}
+
+async function setNativeLang(lang){
+    await setItem('NATIVE_LANG', lang);
+}
+
 export default {
     getItem, 
     setItem, 
@@ -90,4 +125,6 @@ export default {
     setFlaggedScenes,
     getSelectedTracks,
     setSelectedTracks,
+    getNativeLang,
+    setNativeLang
 }

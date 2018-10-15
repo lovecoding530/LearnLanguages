@@ -14,8 +14,9 @@ I18n.translations = {
   es
 };
 
-const currentLocale = I18n.currentLocale();
-console.log('currentLocale', currentLocale)
+export const currentLocale = I18n.currentLocale();
+export const currentLocaleTwoLetters = currentLocale.substr(0, 2);
+console.log({currentLocale, currentLocaleTwoLetters})
 
 // Is it a RTL language?
 export const isRTL = currentLocale.indexOf('he') === 0 || currentLocale.indexOf('ar') === 0;
