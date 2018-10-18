@@ -38,6 +38,7 @@ import appdata, {TARGET_LANG} from '../appdata';
 import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
 import Segment from 'react-native-segmented-control-tab'
+import Tooltip from 'react-native-walkthrough-tooltip'
 
 const videoId = "kw2OFJeRIZ8";
 const {width, height} = Dimensions.get('window')
@@ -695,13 +696,30 @@ export default class Player extends Component{
                       <Icon name="undo-alt" size={30} color='#fff'/>
                     </TouchableOpacity>
                     <View style={{flex: 1, alignItems: 'center'}}>
-                      <TouchableOpacity 
-                        onPress={this.onNext}
-                        disabled={this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1}
-                        style={styles.playerButton}
+                      <Tooltip
+                        animated
+                        isVisible={true}
+                        content={
+                          <View style={{flex: 1}}>
+                            <Text>Next Scene</Text>
+                            <Text>
+                              Press here to move on to the next scene.{"\n"}
+                              there is no play button in Scene Mode.{"\n"}
+                              Switch the mode to Play All to view {"\n"}the video normal.
+                            </Text>
+                          </View>
+                        }
+                        placement="top"
+                        onClose={() => this.setState({ toolTipVisible: false })}
                       >
-                        <Icon name="step-forward" size={30} color='#fff'/>
-                      </TouchableOpacity>
+                        <TouchableOpacity 
+                          onPress={this.onNext}
+                          disabled={this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1}
+                          style={styles.playerButton}
+                        >
+                          <Icon name="step-forward" size={30} color='#fff'/>
+                        </TouchableOpacity>
+                      </Tooltip>
                     </View>
                   </View>
                 }
