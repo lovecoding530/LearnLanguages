@@ -2,17 +2,14 @@ import ReactNative from 'react-native';
 import I18n from 'react-native-i18n';
 
 // Import all locales
-import en from './locale/en.json';
-import es from './locale/es.json';
+import locales from './locale';
+
 
 // Should the app fallback to English if user locale doesn't exists
 I18n.fallbacks = true;
 
 // Define the supported translations
-I18n.translations = {
-  en,
-  es
-};
+I18n.translations = locales
 
 export const currentLocale = I18n.currentLocale();
 export const currentLocaleTwoLetters = currentLocale.substr(0, 2);

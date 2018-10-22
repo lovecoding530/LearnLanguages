@@ -10,6 +10,7 @@ import appdata, {APP_NAME} from '../appdata';
 import {currentLocaleTwoLetters} from '../i18n';
 import * as RNIap from 'react-native-iap';
 import SelectLangModal from './SelectLangModal';
+import { strings } from '../i18n';
 
 const FREE_USE_TIME = 1 * 60 * 60;
 
@@ -84,8 +85,8 @@ export default class Splash extends Component {
         return (
             <View style={styles.container}>
                 <Image source={require('../assets/logo.png')} style={styles.logo}/>
-                <Text style={styles.title}>{APP_NAME}</Text>
-                <Text style={styles.detail}>Making Authentic Language Accessible</Text>
+                <Text style={styles.title}>{strings(APP_NAME)}</Text>
+                <Text style={styles.detail}>{strings('Making Authentic Language Accessible')}</Text>
                 <SelectLangModal 
                     visible={this.state.visibleModal}
                     onCancel={this.onCancelSelectLang}

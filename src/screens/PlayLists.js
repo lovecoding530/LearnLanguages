@@ -46,7 +46,7 @@ export default class PlayLists extends Component {
             <View style={{flex: 1}}>
                 <View style={styles.nav}>
                     <Image source={require('../assets/logo.png')} style={styles.navIcon}/>
-                    <Text style={styles.navTitle}>{APP_NAME}</Text>
+                    <Text style={styles.navTitle}>{strings(APP_NAME)}</Text>
                 </View>
                 <FlatList
                     contentContainerStyle={styles.FlatList}

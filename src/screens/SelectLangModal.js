@@ -24,7 +24,7 @@ export default class SelectLangModal extends Component {
             >
                 <View style={styles.container}>
                     <View style={styles.modal}>
-                        <Text>Sorry at this time this app is only available for the following languages. If you would like to continue please select your preferred language.</Text>
+                        <Text style={styles.desc}>{strings('select lang modal desc')}</Text>
                         <Picker
                             selectedValue={this.state.selectedLang}
                             style={{ height: 50, width: '100%' }}
@@ -35,8 +35,8 @@ export default class SelectLangModal extends Component {
                             ))}
                         </Picker>
                         <View style={styles.buttonBar}>
-                            <Button title="Cancel" onPress={onCancel}/>
-                            <Button title="  OK  " onPress={()=>onOK(this.state.selectedLang)}/>
+                            <Button title={strings("Cancel")} onPress={onCancel}/>
+                            <Button title={strings("OK")} onPress={()=>onOK(this.state.selectedLang)}/>
                         </View>
                     </View>
                 </View>
@@ -63,5 +63,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row', 
         justifyContent: 'space-between',
         paddingHorizontal: 16,
+    }, 
+
+    desc: {
+        fontSize: 17
     }
 });

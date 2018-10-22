@@ -66,8 +66,8 @@ export default class SelectSubModal extends Component {
                             ))}
                         </Picker>
                         <View style={styles.buttonBar}>
-                            <Button title="Cancel" onPress={onCancel}/>
-                            <Button title="  OK  " onPress={this.onPressOK}/>
+                            <Button title={strings("Cancel")} onPress={onCancel}/>
+                            <Button title={strings("OK")} onPress={this.onPressOK}/>
                         </View>
                     </View>
                 </View>

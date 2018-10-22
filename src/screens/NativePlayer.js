@@ -39,6 +39,7 @@ import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
 import Segment from 'react-native-segmented-control-tab'
 import Tooltip from 'react-native-walkthrough-tooltip'
+import { strings } from '../i18n';
 
 const videoId = "kw2OFJeRIZ8";
 const {width, height} = Dimensions.get('window')
@@ -235,12 +236,12 @@ export default class Player extends Component{
     if(this.state.reviewMode){
       if(this.state.currentReviewScene == this.state.flaggedScenes.length - 1){
         Alert.alert(
-          "Ended", 
-          "You have reached the last flagged scene, would you like to restart?", [
+          strings("Ended"), 
+          strings("You have reached the last flagged scene, would you like to restart?"), [
             {
-              text: 'Cancel', 
+              text: strings('Cancel'), 
             },{
-              text: 'OK', 
+              text: strings('OK'), 
               onPress: ()=>{
                 this.setCurrentTime(0);
                 this.setState({currentReviewScene: 0});
@@ -253,12 +254,12 @@ export default class Player extends Component{
     }else{
       if(this.state.currentTargetSubtitle.index ==  this.state.targetSubtitles.length - 1){
         Alert.alert(
-          "Ended", 
-          "You have reached the last scene, would you like to restart?", [
+          strings("Ended"), 
+          strings("You have reached the last scene, would you like to restart?"), [
             {
-              text: 'Cancel', 
+              text: strings('Cancel'), 
             },{
-              text: 'OK', 
+              text: strings('OK'), 
               onPress: ()=>{
                 this.setCurrentTime(0);
                 this.toSceneIndex(0);
@@ -272,13 +273,13 @@ export default class Player extends Component{
 
   onEnd = () => {
     Alert.alert(
-      "Ended", 
-      "You have reached the end, would you like to restart?", [
+      strings("Ended"), 
+      strings("You have reached the end, would you like to restart?"), [
         {
-          text: 'Cancel', onPress: ()=>{
+          text: strings('Cancel'), onPress: ()=>{
           }
         },{
-          text: 'OK', onPress: ()=>{
+          text: strings('OK'), onPress: ()=>{
             this.setCurrentTime(0);
             if(this.state.playAll){
               this.player.seek(0);
@@ -442,7 +443,7 @@ export default class Player extends Component{
       this.setState({dictionaryData});
       this.dictionaryList.scrollToTop();  
     }else{
-      alert("The glosbe server is down at the moment please check later.");
+      alert(strings("The glosbe server is down at the moment please check later."));
     }
   }
 
@@ -528,7 +529,7 @@ export default class Player extends Component{
       }
     }
     if(!targetTrack || !nativeTrack){
-      alert('There is no subtitle track');
+      alert(strings('There is no subtitle track'));
       return;
     }
     let targetSubtitles = await api.getSubtitlesFromTrack(targetTrack);
@@ -577,7 +578,7 @@ export default class Player extends Component{
       await api.saveNewVideo(TARGET_LANG, NATIVE_LANG, videoId);
     }
     if(!available){
-      alert('The video has not available subtitle tracks');
+      alert(strings('The video has not available subtitle tracks'));
     }
   }
 
@@ -587,7 +588,10 @@ export default class Player extends Component{
     let end = Math.ceil(this.state.currentTargetSubtitle.end);
     let shareUrl = `https://www.youtube.com/watch?v=${this.state.videoId}&t=${start}`;
     Clipboard.setString(shareUrl + '\n' + targetSubtitleText);
-    Alert.alert('Scene Copied to Clipboard', 'The Youtube link for this scene has been copied to your clipboard');
+    Alert.alert(
+      strings('Scene Copied to Clipboard'), 
+      strings('The Youtube link for this scene has been copied to your clipboard')
+    );
   }
 
   didShowNextSceneTooltip = async () => {
@@ -645,7 +649,7 @@ export default class Player extends Component{
                     </TouchableOpacity>
                     <View style={{flex: 1}}/>
                     <Segment
-                      values={['Scenes', 'Play all']}
+                      values={[strings('Scenes'), strings('Play all')]}
                       selectedIndex={Number(this.state.playAll)}
                       onTabPress={this.onModeSwitchChanged}
                       tabsContainerStyle={{width: 120, height: 22}}
@@ -716,12 +720,8 @@ export default class Player extends Component{
                         isVisible={isVisibleNextSceneTooltip}
                         content={
                           <View style={{flex: 1}}>
-                            <Text style={{fontWeight: 'bold'}}>Next Scene</Text>
-                            <Text style={{fontSize: 13}}>
-                              Press here to move on to the next scene. there is {"\n"} 
-                              no play button in Scene Mode. Switch the mode {"\n"} 
-                              to Play All to view the video like normal.
-                            </Text>
+                            <Text style={{fontWeight: 'bold'}}>{strings('Next Scene')}</Text>
+                            <Text style={{fontSize: 13}}>{strings('next scene desc')}</Text>
                           </View>
                         }
                         placement="bottom"
@@ -807,7 +807,7 @@ export default class Player extends Component{
                 :
                 <View style={{padding: 8}}>
                   <Button 
-                    title="Click here to show transcription" 
+                    title={strings("Click here to show transcription")} 
                     onPress={this.onPressedShowTranscription}
                   />
                 </View>
@@ -834,7 +834,7 @@ export default class Player extends Component{
                 :
                 <View style={{paddingHorizontal: 8}}>
                   <Button 
-                    title="Click here to show translation" 
+                    title={strings("Click here to show translation")} 
                     onPress={this.onPressedShowTranslation}
                   />
                 </View>
