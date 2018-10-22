@@ -6,7 +6,7 @@ import {
 import {currentLocaleTwoLetters} from './i18n';
 
 export const FAV_ICON = "https://facebook.github.io/react-native/docs/assets/favicon.png";
-export const TARGET_LANG = 'en';
+export const TARGET_LANG = 'es';
 export const NATIVE_LANG = 'en';
 export const APP_NAME = 'Scene by Scene - Spanish';
 export const LANGUAGES = [
@@ -114,6 +114,16 @@ async function setNativeLang(lang){
     await setItem('NATIVE_LANG', lang);
 }
 
+async function setShownTooltips(tooltips){
+    let key = `tooltips`;
+    await setItem(key, tooltips);
+}
+
+async function getShownTooltips(){
+    let key = `tooltips`;
+    return await getItem(key) || [];
+}
+
 export default {
     getItem, 
     setItem, 
@@ -126,5 +136,8 @@ export default {
     getSelectedTracks,
     setSelectedTracks,
     getNativeLang,
-    setNativeLang
+    setNativeLang,
+
+    setShownTooltips,
+    getShownTooltips,
 }

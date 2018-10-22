@@ -101,11 +101,13 @@ export default class Player extends Component{
       modalVisible: false,
       moreSub: false,
       allowDragging: false,
+      shownTooltips: []
     };
   }
 
   async componentDidMount() {
     NATIVE_LANG = await appdata.getNativeLang();
+    let shownTooltips = await appdata.getShownTooltips();
     let videoInfo = await api.getYoutubeVideoInfo(this.state.videoId);
     let videoUrl = await api.getYoutubeVideoDownloadUrl(this.state.videoId, videoInfo);
     console.log('videoUrl', videoUrl);
@@ -133,6 +135,7 @@ export default class Player extends Component{
       videoTitle: videoInfo.title,
       subtitleTracks,
       moreSub,
+      shownTooltips
     });
 
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow);
@@ -337,6 +340,7 @@ export default class Player extends Component{
       if(this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1) return;
       this.toSceneIndex(this.state.currentTargetSubtitle.index + 1);      
     }
+    this.didShowNextSceneTooltip();
   }
 
   onReplay = () => {
@@ -586,10 +590,21 @@ export default class Player extends Component{
     Alert.alert('Scene Copied to Clipboard', 'The Youtube link for this scene has been copied to your clipboard');
   }
 
+  didShowNextSceneTooltip = async () => {
+    let {shownTooltips} = this.state;
+    shownTooltips.push("next-scene");
+    this.setState({
+      shownTooltips
+    },async ()=>{
+      await appdata.setShownTooltips(shownTooltips);
+    });
+  }
+
   render() {
     let currentTargetSubtitleText = this.state.currentTargetSubtitle ? this.state.currentTargetSubtitle.text || "" : "";
     currentTargetSubtitleText = strip(currentTargetSubtitleText);
     let isFlagged = this.state.flaggedScenes.indexOf(this.state.currentTargetSubtitle.index) > -1;
+    let isVisibleNextSceneTooltip = !this.state.shownTooltips.includes("next-scene");
     return (
       <View style={styles.container}>
         <TouchableWithoutFeedback onPress={this.onPressPlayer}>
@@ -698,19 +713,20 @@ export default class Player extends Component{
                     <View style={{flex: 1, alignItems: 'center'}}>
                       <Tooltip
                         animated
-                        isVisible={true}
+                        isVisible={isVisibleNextSceneTooltip}
                         content={
                           <View style={{flex: 1}}>
-                            <Text>Next Scene</Text>
-                            <Text>
-                              Press here to move on to the next scene.{"\n"}
-                              there is no play button in Scene Mode.{"\n"}
-                              Switch the mode to Play All to view {"\n"}the video normal.
+                            <Text style={{fontWeight: 'bold'}}>Next Scene</Text>
+                            <Text style={{fontSize: 13}}>
+                              Press here to move on to the next scene. there is {"\n"} 
+                              no play button in Scene Mode. Switch the mode {"\n"} 
+                              to Play All to view the video like normal.
                             </Text>
                           </View>
                         }
-                        placement="top"
-                        onClose={() => this.setState({ toolTipVisible: false })}
+                        placement="bottom"
+                        arrowStyle={{top: -8}}
+                        onClose={this.didShowNextSceneTooltip}
                       >
                         <TouchableOpacity 
                           onPress={this.onNext}
