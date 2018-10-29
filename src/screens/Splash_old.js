@@ -11,9 +11,8 @@ import {currentLocaleTwoLetters} from '../i18n';
 import * as RNIap from 'react-native-iap';
 import SelectLangModal from './SelectLangModal';
 import { strings } from '../i18n';
-import RNExitApp from 'react-native-exit-app';
 
-const FREE_USE_TIME = 1 * 60 * 1000;
+const FREE_USE_TIME = 30;
 
 export default class Splash extends Component {
     state = {
@@ -21,52 +20,54 @@ export default class Splash extends Component {
     }
 
     async componentDidMount() {
-        await this.checkPurchase();
-
-        setTimeout(async ()=>{
-            if(await appdata.getNativeLang()){
-                this.props.navigation.navigate('MainStack');
-            }else{
-                this.setState({visibleModal: true});
-            }
-        }, 2000);
-
-    }
-
-    checkPurchase = async () => {
-        let time = new Date().getTime();
-        let firstRunTime = await appdata.getItem('first-run-time');
-
-        if(firstRunTime){
-            let usedTime = time - firstRunTime;
-            await this.buyProduct();
-            // setTimeout(async ()=>{
-            //     await this.buyProduct();
-            // }, FREE_USE_TIME - usedTime);
-        }else{
+        let start = new Date();
+        let res = await this.checkPurchase();
+        let end = new Date();
+        if(res){
+            let diff = end - start;
             setTimeout(async ()=>{
-                await this.buyProduct();
-            }, FREE_USE_TIME);
-            appdata.setItem('first-run-time', time);
+                if(await appdata.getNativeLang()){
+                    this.props.navigation.navigate('MainStack');
+                }else{
+                    this.setState({visibleModal: true});
+                }
+            }, 2000 - diff);
         }
     }
 
-    buyProduct = async () => {
-        const itemSku = Platform.select({
-            ios: 'com.example.coins100',
-            android: 'monthly.payment'
-        });
+    checkPurchase = async () => {
+        let time = new Date().getTime() / 1000;
+        let firstRunTime = await appdata.getItem('first-run-time');
 
-        try {
-            const availablePurchases = await RNIap.getAvailablePurchases();
-            let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == itemSku);
-            if(!monthlyPurchase){
-                const purchased = await RNIap.buySubscription(itemSku);
-                console.log({purchased});
+        if(firstRunTime){
+            if(time - firstRunTime > FREE_USE_TIME){
+
+                const itemSku = Platform.select({
+                    ios: 'com.example.coins100',
+                    android: 'monthly.payment'
+                });
+
+                try {
+                    const products = await RNIap.getProducts([itemSku]);
+                    console.log({products});
+                    const availablePurchases = await RNIap.getAvailablePurchases();
+                    console.log({availablePurchases});
+                    let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == itemSku);
+                    if(!monthlyPurchase){
+                        const purchase = await RNIap.buySubscription(itemSku);
+                        console.log({purchase});
+                    }
+                    return true;
+                } catch(err) {
+                    console.log(err); // standardized err.code and err.message available
+                    return false;
+                }
+            }else{
+                return true;
             }
-        } catch(err) {
-            console.log(err); // standardized err.code and err.message available
-            RNExitApp.exitApp();
+        }else{
+            appdata.setItem('first-run-time', time);
+            return true;
         }
     }
 

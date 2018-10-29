@@ -163,6 +163,7 @@ android {
 }
 
 dependencies {
+    compile project(':react-native-exit-app')
     compile project(':react-native-iap')
     compile project(':react-native-sentry')
     compile project(':react-native-vector-icons')
