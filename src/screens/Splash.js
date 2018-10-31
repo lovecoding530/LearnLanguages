@@ -39,10 +39,9 @@ export default class Splash extends Component {
 
         if(firstRunTime){
             let usedTime = time - firstRunTime;
-            await this.buyProduct();
-            // setTimeout(async ()=>{
-            //     await this.buyProduct();
-            // }, FREE_USE_TIME - usedTime);
+            setTimeout(async ()=>{
+                await this.buyProduct();
+            }, FREE_USE_TIME - usedTime);
         }else{
             setTimeout(async ()=>{
                 await this.buyProduct();
