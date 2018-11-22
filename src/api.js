@@ -320,9 +320,9 @@ async function getDeciperSignature(videoId, signature) {
     var url = `https://www.youtube.com/embed/${videoId}?disable_polymer=true&hl=en`;
     let page = await getText(url);
 
-    let configStr = /\({'PLAYER_CONFIG':\s(.*?)}\);/.exec(page)[1];
-    let json = JSON.parse(configStr);
-    let playerSourceUrl = `https://www.youtube.com${json.assets.js}`;
+    let configStr = /setConfig\(({'PLAYER_CONFIG':\s(.*?)})\);/.exec(page)[1];
+    let configJson = eval(`(${configStr})`); //use eval instead of JSON.parse because JSON.parse not allow single quote(')
+    let playerSourceUrl = `https://www.youtube.com${configJson.PLAYER_CONFIG.assets.js}`;
 
     let playerSource = await getText(playerSourceUrl);
 
