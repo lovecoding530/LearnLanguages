@@ -5173,9 +5173,9 @@ react-native-i18n@^2.0.15:
     i18n-js "3.0.11"
 
 react-native-iap@^2.2.2:
-  version "2.3.8"
-  resolved "https://registry.yarnpkg.com/react-native-iap/-/react-native-iap-2.3.8.tgz#88123b8113b92a3b0d24b7f8f622a5d0eacf08ed"
-  integrity sha512-oG+MURAqBCkLAUBWg43zaYghCI7a6nAo7QLC3az+9fbpDE4oYfvI6wQQJBXlSOj/BqD6AkXNq2Vgn/H3P4ldQw==
+  version "2.3.19"
+  resolved "https://registry.yarnpkg.com/react-native-iap/-/react-native-iap-2.3.19.tgz#43ff96c655c3542b7972b384102886c52f508663"
+  integrity sha512-ecIdqQ9KqHjPPy8TFDD55ruULQSWKXXltt5tH0eNVUHcmekf8r8edEjHOLvIGUUKuJnYhLN+2AdTn+lJWeFMvA==
   dependencies:
     dooboolab-welcome "^1.0.5"
 
