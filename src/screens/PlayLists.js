@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
-import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, Button, FlatList, Image, Platform} from 'react-native';
 import PlayListItem from "../components/PlayListItem";
 import api from '../api';
 import { strings } from '../i18n';
 import appdata, {TARGET_LANG, APP_NAME} from '../appdata';
+import { getStatusBarHeight } from 'react-native-iphone-x-helper'
 
 export default class PlayLists extends Component {
     state = {
@@ -28,6 +29,8 @@ export default class PlayLists extends Component {
 
         let playLists = await api.getPlaylistsInChannel(channelId);
         this.setState({playLists: playLists.items, nextPageToken: playLists.nextPageToken});
+
+        console.log({getStatusBarHeight:getStatusBarHeight()})
     }
 
     onEndReached = async () => {
@@ -73,6 +76,10 @@ const styles = StyleSheet.create({
 
     nav: {
         padding: 12, 
+        paddingTop: Platform.select({
+            ios: getStatusBarHeight() + 12,
+            android: 12
+        }),
         elevation: 2, 
         backgroundColor: '#fff', 
         flexDirection: 'row', 

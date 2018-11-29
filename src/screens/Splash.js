@@ -52,7 +52,7 @@ export default class Splash extends Component {
 
     buyProduct = async () => {
         const itemSku = Platform.select({
-            ios: 'com.example.coins100',
+            ios: 'com.scenebyscene.spanish.monthly.payment',
             android: 'monthly.payment'
         });
 

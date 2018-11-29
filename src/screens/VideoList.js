@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, Button, FlatList, Image, SafeAreaView} from 'react-native';
 import VideoListItem from "../components/VideoListItem";
 import api from '../api';
 import appdata, {FAV_ICON} from '../appdata';
@@ -49,23 +49,25 @@ export default class VideoList extends Component {
 
     render(){
         return (
-            <View style={{flex: 1}}>
-                <FlatList
-                    contentContainerStyle={styles.flatList}
-                    extraData={this.state}
-                    data={this.state.videos}
-                    renderItem={({item, index})=>(
-                        <VideoListItem
-                            item={item}
-                            onPress={()=>this.onPressItem(item)}
-                            focus={this.state.focus}
-                        />
-                    )}
-                    keyExtractor={(item, index) => index.toString()}
-                    onEndReachedThreshold={0.1}
-                    onEndReached={this.onEndReached}
-                />
-            </View>
+            <SafeAreaView style={{flex: 1}}>
+                <View style={{flex: 1}}>
+                    <FlatList
+                        contentContainerStyle={styles.flatList}
+                        extraData={this.state}
+                        data={this.state.videos}
+                        renderItem={({item, index})=>(
+                            <VideoListItem
+                                item={item}
+                                onPress={()=>this.onPressItem(item)}
+                                focus={this.state.focus}
+                            />
+                        )}
+                        keyExtractor={(item, index) => index.toString()}
+                        onEndReachedThreshold={0.1}
+                        onEndReached={this.onEndReached}
+                    />
+                </View>
+            </SafeAreaView>
         )
     }
 }
