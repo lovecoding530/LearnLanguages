@@ -39,7 +39,7 @@ import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
 import Segment from 'react-native-segmented-control-tab'
 import Tooltip from 'react-native-walkthrough-tooltip'
-import { strings } from '../i18n';
+import { strings, isRTL } from '../i18n';
 
 const videoId = "kw2OFJeRIZ8";
 const {width, height} = Dimensions.get('window')
@@ -705,7 +705,11 @@ export default class Player extends Component{
                         disabled={this.state.currentTargetSubtitle.index == 0}
                         style={styles.playerButton}
                       >
-                        <Icon name="step-backward" size={30} color='#fff'/>
+                          {isRTL ?
+                            <Icon name="step-forward" size={30} color='#fff'/>
+                            :
+                            <Icon name="step-backward" size={30} color='#fff'/>
+                          }
                       </TouchableOpacity>
                     </View>
                     <TouchableOpacity 
@@ -733,7 +737,11 @@ export default class Player extends Component{
                           disabled={this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1}
                           style={styles.playerButton}
                         >
-                          <Icon name="step-forward" size={30} color='#fff'/>
+                          {isRTL ?
+                            <Icon name="step-backward" size={30} color='#fff'/>
+                            :
+                            <Icon name="step-forward" size={30} color='#fff'/>
+                          }
                         </TouchableOpacity>
                       </Tooltip>
                     </View>
