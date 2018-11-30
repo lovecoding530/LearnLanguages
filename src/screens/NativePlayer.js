@@ -38,7 +38,7 @@ import appdata, {TARGET_LANG} from '../appdata';
 import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
 import Segment from 'react-native-segmented-control-tab'
-import Tooltip from 'react-native-walkthrough-tooltip'
+import Tooltip from '../components/Tooltip'
 import { strings, isRTL } from '../i18n';
 
 const videoId = "kw2OFJeRIZ8";
@@ -721,7 +721,7 @@ export default class Player extends Component{
                     <View style={{flex: 1, alignItems: 'center'}}>
                       <Tooltip
                         animated
-                        isVisible={isVisibleNextSceneTooltip}
+                        isVisible={true}
                         content={
                           <View style={{flex: 1}}>
                             <Text style={{fontWeight: 'bold'}}>{strings('Next Scene')}</Text>
