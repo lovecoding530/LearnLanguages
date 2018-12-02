@@ -664,7 +664,12 @@ export default class Player extends Component{
                   </View>
                 </View>
                 {this.state.playAll ?
-                  <View style={styles.playallButtons}>
+                  <View 
+                    style={[
+                      styles.playallButtons,
+                      isRTL ? {flexDirection: 'row-reverse'} : {flexDirection: 'row'}
+                    ]}
+                  >
                     <View style={{flex: 1, alignItems: 'center'}}>
                       <TouchableOpacity
                         onPress={this.onBack5}
@@ -698,18 +703,19 @@ export default class Player extends Component{
                     </View>
                   </View>
                   :
-                  <View style={styles.buttons}>
+                  <View 
+                    style={[
+                      styles.buttons,
+                      isRTL ? {flexDirection: 'row-reverse'} : {flexDirection: 'row'}
+                    ]}
+                  >
                     <View style={{flex: 1, alignItems: 'center'}}>
                       <TouchableOpacity
                         onPress={this.onPrev}
                         disabled={this.state.currentTargetSubtitle.index == 0}
                         style={styles.playerButton}
                       >
-                          {isRTL ?
-                            <Icon name="step-forward" size={30} color='#fff'/>
-                            :
-                            <Icon name="step-backward" size={30} color='#fff'/>
-                          }
+                        <Icon name="step-backward" size={30} color='#fff'/>
                       </TouchableOpacity>
                     </View>
                     <TouchableOpacity 
@@ -721,7 +727,7 @@ export default class Player extends Component{
                     <View style={{flex: 1, alignItems: 'center'}}>
                       <Tooltip
                         animated
-                        isVisible={true}
+                        isVisible={isVisibleNextSceneTooltip}
                         content={
                           <View style={{flex: 1}}>
                             <Text style={{fontWeight: 'bold'}}>{strings('Next Scene')}</Text>
@@ -737,30 +743,29 @@ export default class Player extends Component{
                           disabled={this.state.currentTargetSubtitle.index == this.state.targetSubtitles.length - 1}
                           style={styles.playerButton}
                         >
-                          {isRTL ?
-                            <Icon name="step-backward" size={30} color='#fff'/>
-                            :
-                            <Icon name="step-forward" size={30} color='#fff'/>
-                          }
+                          <Icon name="step-forward" size={30} color='#fff'/>
                         </TouchableOpacity>
                       </Tooltip>
                     </View>
                   </View>
                 }
-                <View style={styles.playerBottomBar}>
-                  <View style={styles.sliderBar}>
-                    <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.currentTimeInSec)}</Text>
-                    <Slider 
-                      style={styles.playerSlider}
-                      onSlidingComplete={this.onSlidingComplete}
-                      onValueChange={this.onSlideValueChange}
-                      maximumValue={this.state.duration}
-                      minimumValue={0}
-                      value={this.state.currentTimeInSec}
-                      maximumTrackTintColor='#fff'
-                    />
-                    <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.duration)}</Text>
-                  </View>
+                <View 
+                  style={[
+                    styles.playerBottomBar,
+                    isRTL ? {flexDirection: 'row-reverse'} : {flexDirection: 'row'}
+                  ]}
+                >
+                  <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.currentTimeInSec)}</Text>
+                  <Slider 
+                    style={styles.playerSlider}
+                    onSlidingComplete={this.onSlidingComplete}
+                    onValueChange={this.onSlideValueChange}
+                    maximumValue={this.state.duration}
+                    minimumValue={0}
+                    value={this.state.currentTimeInSec}
+                    maximumTrackTintColor='#fff'
+                  />
+                  <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.duration)}</Text>
                   <TouchableOpacity 
                       style={{padding: 8}}
                       onPress={this.onShareScene}
@@ -1058,7 +1063,9 @@ const styles = {
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    flexDirection: 'row'
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 8
   },
 
   playerTopBar: {
@@ -1157,10 +1164,11 @@ const styles = {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 1,
+    padding: 2,
     borderWidth: 1, 
     borderColor: 'red', 
     minWidth: 60,
+    marginTop: 2,
   },
 
   imageButton: {

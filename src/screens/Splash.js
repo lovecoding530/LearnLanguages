@@ -13,7 +13,7 @@ import SelectLangModal from './SelectLangModal';
 import { strings } from '../i18n';
 import RNExitApp from 'react-native-exit-app';
 
-const FREE_USE_TIME = 500 * 60 * 1000;
+const FREE_USE_TIME = 5 * 60 * 1000;
 
 export default class Splash extends Component {
     state = {
