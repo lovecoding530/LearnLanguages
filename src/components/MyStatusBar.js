@@ -8,17 +8,17 @@ import { getStatusBarHeight } from 'react-native-iphone-x-helper'
 
 const MyStatusBar = (props) => {
     return (
+        Platform.OS == 'ios' ? 
         <View 
             style={{
                 backgroundColor: '#000',
-                height: Platform.select({
-                    ios: getStatusBarHeight(true),
-                    android: 0
-                }),
+                height: getStatusBarHeight(true),
             }}
         >
             <StatusBar barStyle='light-content' />
         </View>
+        :
+        <View/>
     )
 }
 
