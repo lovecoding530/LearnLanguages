@@ -12,20 +12,18 @@ import {
   Text, 
   View, 
   Button, 
-  Slider, 
   TouchableOpacity, 
   TouchableWithoutFeedback,
-  Switch, 
   TextInput,
   Keyboard,
   Dimensions,
-  ScrollView,
-  KeyboardAvoidingView,
   FlatList,
   Image,
   AppState,
   Alert,
-  Clipboard
+  Clipboard,
+  Platform,
+  StatusBar
 } from 'react-native';
 import api, {GOOGLE_API_KEY} from '../api';
 import Video from 'react-native-video';
@@ -39,9 +37,11 @@ import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
 import Segment from 'react-native-segmented-control-tab'
 import Tooltip from '../components/Tooltip'
+import MyStatusBar from '../components/MyStatusBar'
+import Slider from 'react-native-slider'
 import { strings, isRTL } from '../i18n';
+import { getStatusBarHeight } from 'react-native-iphone-x-helper'
 
-const videoId = "kw2OFJeRIZ8";
 const {width, height} = Dimensions.get('window')
 
 let NATIVE_LANG = 'en';
@@ -611,6 +611,7 @@ export default class Player extends Component{
     let isVisibleNextSceneTooltip = !this.state.shownTooltips.includes("next-scene");
     return (
       <View style={styles.container}>
+        <MyStatusBar/>
         <TouchableWithoutFeedback onPress={this.onPressPlayer}>
           {this.state.videoUrl ?
             <View style={[styles.playerWrapper, this.state.videoSize]}>
@@ -758,12 +759,19 @@ export default class Player extends Component{
                   <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.currentTimeInSec)}</Text>
                   <Slider 
                     style={styles.playerSlider}
+                    thumbStyle={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 8
+                    }}
                     onSlidingComplete={this.onSlidingComplete}
                     onValueChange={this.onSlideValueChange}
                     maximumValue={this.state.duration}
                     minimumValue={0}
                     value={this.state.currentTimeInSec}
+                    minimumTrackTintColor='#4682b4'
                     maximumTrackTintColor='#fff'
+                    thumbTintColor='#4682b4'
                   />
                   <Text style={{color: '#fff'}}>{timeStringFromSeconds(this.state.duration)}</Text>
                   <TouchableOpacity 
@@ -1057,6 +1065,7 @@ const styles = {
 
   playerSlider: {
     flex: 1,
+    marginHorizontal: 8
   },
 
   playerBottomBar: {
