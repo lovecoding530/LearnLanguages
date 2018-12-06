@@ -18,6 +18,8 @@
     "react-native-i18n": "^2.0.15",
     "react-native-iap": "^2.2.2",
     "react-native-iphone-x-helper": "^1.2.0",
+    "react-native-modal-picker": "0.0.16",
+    "react-native-modal-selector": "^1.0.0",
     "react-native-parsed-text": "0.0.20",
     "react-native-render-html": "^3.10.0",
     "react-native-segmented-control-tab": "^3.3.1",

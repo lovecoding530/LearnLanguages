@@ -3,6 +3,7 @@ import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity, Modal
 import api from '../api';
 import { strings } from '../i18n';
 import appdata, {TARGET_LANG} from '../appdata';
+import ModalSelector from 'react-native-modal-selector'
 
 export default class SelectSubModal extends Component {
     state={
@@ -48,23 +49,10 @@ export default class SelectSubModal extends Component {
                 <View style={styles.container}>
                     <View style={styles.modal}>
                         <Text>Transcription Subtitles</Text>
-                        <Picker
-                            selectedValue={this.state.selectedTargetTrackKey}
-                            style={{ height: 50, width: '100%' }}
-                            onValueChange={(selectedTargetTrackKey, itemIndex) => this.setState({selectedTargetTrackKey})}>
-                            {this.state.targetTracks.map((track, index)=>(
-                                <Picker.Item label={track.label} value={track.key} key={track.key}/>
-                            ))}
-                        </Picker>
-                        <Text>Translation Subtitles</Text>
-                        <Picker
-                            selectedValue={this.state.selectedNativeTrackKey}
-                            style={{ height: 50, width: '100%' }}
-                            onValueChange={(selectedNativeTrackKey, itemIndex) => this.setState({selectedNativeTrackKey})}>
-                            {this.state.nativeTracks.map((track, index)=>(
-                                <Picker.Item label={track.label} value={track.key} key={track.key}/>
-                            ))}
-                        </Picker>
+                        <ModalSelector
+                            data={this.state.targetTracks}
+                            initValue="Select something yummy!"
+                            onChange={(option)=>{ alert(`${option.label} (${option.key}) nom nom nom`) }} />
                         <View style={styles.buttonBar}>
                             <Button title={strings("Cancel")} onPress={onCancel}/>
                             <Button title={strings("OK")} onPress={this.onPressOK}/>
@@ -93,6 +81,7 @@ const styles = StyleSheet.create({
     buttonBar: {
         flexDirection: 'row', 
         justifyContent: 'space-between',
+        paddingTop: 200,
         paddingHorizontal: 16,
     }
 });
