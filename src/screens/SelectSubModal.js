@@ -13,8 +13,8 @@ export default class SelectSubModal extends Component {
         nativeTracks: [],
     }
 
-    async componentDidMount () {
-        let {subtitleTracks, targetTrack, nativeTrack} = this.props;
+    async componentWillReceiveProps (props) {
+        let {subtitleTracks, targetTrack, nativeTrack} = props;
         const NATIVE_LANG = await appdata.getNativeLang();
         let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(TARGET_LANG));
         let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(NATIVE_LANG));
@@ -24,6 +24,8 @@ export default class SelectSubModal extends Component {
             nativeTracks,
             selectedTargetTrackKey: targetTrack.key,
             selectedNativeTrackKey: nativeTrack.key,
+            selectedTargetTrackLabel: targetTrack.label,
+            selectedNativeTrackLabel: nativeTrack.label,
         });
     }
 
@@ -48,11 +50,20 @@ export default class SelectSubModal extends Component {
             >
                 <View style={styles.container}>
                     <View style={styles.modal}>
-                        <Text>Transcription Subtitles</Text>
+                        <Text style={{marginVertical: 8, fontSize: 18}}>Transcription Subtitles</Text>
                         <ModalSelector
+                            overlayStyle={{justifyContent: 'flex-end', backgroundColor: '#0000'}}
+                            cancelText="Cancel"
                             data={this.state.targetTracks}
-                            initValue="Select something yummy!"
-                            onChange={(option)=>{ alert(`${option.label} (${option.key}) nom nom nom`) }} />
+                            initValue={this.state.selectedTargetTrackLabel}
+                            onChange={(option)=>{ this.setState({selectedTargetTrackKey: option.key}) }} />
+                        <Text style={{marginVertical: 8, fontSize: 18}}>Translation Subtitles</Text>
+                        <ModalSelector
+                            overlayStyle={{justifyContent: 'flex-end', backgroundColor: '#0000'}}
+                            cancelText="Cancel"
+                            data={this.state.nativeTracks}
+                            initValue={this.state.selectedNativeTrackLabel}
+                            onChange={(option)=>{ this.setState({selectedNativeTrackKey: option.key}) }} />
                         <View style={styles.buttonBar}>
                             <Button title={strings("Cancel")} onPress={onCancel}/>
                             <Button title={strings("OK")} onPress={this.onPressOK}/>
@@ -81,7 +92,7 @@ const styles = StyleSheet.create({
     buttonBar: {
         flexDirection: 'row', 
         justifyContent: 'space-between',
-        paddingTop: 200,
         paddingHorizontal: 16,
+        marginTop: 18
     }
 });
