@@ -178,7 +178,7 @@ export default class Player extends Component{
   _keyboardDidHide = (e) => {
     let panelTop = PANEL_HEIGHT - this.state.videoSize.height;
     this.slidingUpPanel.transitionTo(this.state.panelBottom);
-    this.setState({isKeyboardOpen: false, panelTop});
+    this.setState({isKeyboardOpen: false, panelTop, panelPosition: this.state.panelBottom});
   }
 
   _handleAppStateChange = (nextAppState) => {
