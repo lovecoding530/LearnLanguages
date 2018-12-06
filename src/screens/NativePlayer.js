@@ -45,8 +45,13 @@ import { getStatusBarHeight } from 'react-native-iphone-x-helper'
 const {width, height} = Dimensions.get('window')
 
 let NATIVE_LANG = 'en';
+
 const PANEL_HEADER_HEIGHT = 48;
 const PANEL_BOTTOM = PANEL_HEADER_HEIGHT + 22;
+const PANEL_HEIGHT = Platform.select({
+  ios: height - getStatusBarHeight(true),
+  android: height
+})
 
 export default class Player extends Component{
 
@@ -98,7 +103,7 @@ export default class Player extends Component{
       currentReviewScene: -1,
       isDraggingSlide: false,
       appState: AppState.currentState,
-      panelTop: height,
+      panelTop: PANEL_HEIGHT,
       modalVisible: false,
       moreSub: false,
       allowDragging: false,
@@ -164,14 +169,14 @@ export default class Player extends Component{
   }
 
   _keyboardDidShow = (e) => {
-    this.setState({isKeyboardOpen: true, panelTop: height, panelPosition: height});
+    this.setState({isKeyboardOpen: true, panelTop: PANEL_HEIGHT, panelPosition: PANEL_HEIGHT});
     if(this.slidingUpPanel){
-      this.slidingUpPanel.transitionTo(height);
+      this.slidingUpPanel.transitionTo(PANEL_HEIGHT);
     }
   }
 
   _keyboardDidHide = (e) => {
-    let panelTop = height - this.state.videoSize.height;
+    let panelTop = PANEL_HEIGHT - this.state.videoSize.height;
     this.slidingUpPanel.transitionTo(this.state.panelBottom);
     this.setState({isKeyboardOpen: false, panelTop});
   }
@@ -360,7 +365,7 @@ export default class Player extends Component{
   onLoad = (e) => {
     let {duration, naturalSize} = e;
     let videoHeight = naturalSize.height * (width / naturalSize.width)
-    this.setState({isLoaded: true, duration, videoSize: {width, height: videoHeight}, panelTop: height - videoHeight});
+    this.setState({isLoaded: true, duration, videoSize: {width, height: videoHeight}, panelTop: PANEL_HEIGHT - videoHeight});
     if(this.state.playAll == false){
       if(this.currentTime > 0) {
         this.toSceneTime(this.currentTime);
@@ -654,6 +659,7 @@ export default class Player extends Component{
                       selectedIndex={Number(this.state.playAll)}
                       onTabPress={this.onModeSwitchChanged}
                       tabsContainerStyle={{width: 120, height: 22}}
+                      tabStyle={{ paddingVertical: 0}}
                     />
                     <View style={{flex: 1}}/>
                     <Segment
@@ -661,6 +667,7 @@ export default class Player extends Component{
                       selectedIndex={Number(this.state.normalSpeed)}
                       onTabPress={this.onSpeedSwitchChanged}
                       tabsContainerStyle={{width: 100, height: 22}}
+                      tabStyle={{ paddingVertical: 0}}
                     />
                   </View>
                 </View>

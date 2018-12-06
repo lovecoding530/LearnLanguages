@@ -21,7 +21,7 @@ export default class Splash extends Component {
     }
 
     async componentDidMount() {
-        // await this.checkPurchase();
+        await this.checkPurchase();
 
         setTimeout(async ()=>{
             if(await appdata.getNativeLang()){
