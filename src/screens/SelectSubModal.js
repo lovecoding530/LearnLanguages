@@ -3,6 +3,7 @@ import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity, Modal
 import api from '../api';
 import { strings } from '../i18n';
 import appdata, {TARGET_LANG} from '../appdata';
+import ModalSelector from 'react-native-modal-selector'
 
 export default class SelectSubModal extends Component {
     state={
@@ -12,8 +13,8 @@ export default class SelectSubModal extends Component {
         nativeTracks: [],
     }
 
-    async componentDidMount () {
-        let {subtitleTracks, targetTrack, nativeTrack} = this.props;
+    async componentWillReceiveProps (props) {
+        let {subtitleTracks, targetTrack, nativeTrack} = props;
         const NATIVE_LANG = await appdata.getNativeLang();
         let targetTracks = subtitleTracks.filter(track=>track.lang_code.includes(TARGET_LANG));
         let nativeTracks = subtitleTracks.filter(track=>track.lang_code.includes(NATIVE_LANG));
@@ -23,6 +24,8 @@ export default class SelectSubModal extends Component {
             nativeTracks,
             selectedTargetTrackKey: targetTrack.key,
             selectedNativeTrackKey: nativeTrack.key,
+            selectedTargetTrackLabel: targetTrack.label,
+            selectedNativeTrackLabel: nativeTrack.label,
         });
     }
 
@@ -47,24 +50,20 @@ export default class SelectSubModal extends Component {
             >
                 <View style={styles.container}>
                     <View style={styles.modal}>
-                        <Text>Transcription Subtitles</Text>
-                        <Picker
-                            selectedValue={this.state.selectedTargetTrackKey}
-                            style={{ height: 50, width: '100%' }}
-                            onValueChange={(selectedTargetTrackKey, itemIndex) => this.setState({selectedTargetTrackKey})}>
-                            {this.state.targetTracks.map((track, index)=>(
-                                <Picker.Item label={track.label} value={track.key} key={track.key}/>
-                            ))}
-                        </Picker>
-                        <Text>Translation Subtitles</Text>
-                        <Picker
-                            selectedValue={this.state.selectedNativeTrackKey}
-                            style={{ height: 50, width: '100%' }}
-                            onValueChange={(selectedNativeTrackKey, itemIndex) => this.setState({selectedNativeTrackKey})}>
-                            {this.state.nativeTracks.map((track, index)=>(
-                                <Picker.Item label={track.label} value={track.key} key={track.key}/>
-                            ))}
-                        </Picker>
+                        <Text style={{marginVertical: 8, fontSize: 18}}>Transcription Subtitles</Text>
+                        <ModalSelector
+                            overlayStyle={{justifyContent: 'flex-end'}}
+                            cancelText="Cancel"
+                            data={this.state.targetTracks}
+                            initValue={this.state.selectedTargetTrackLabel}
+                            onChange={(option)=>{ this.setState({selectedTargetTrackKey: option.key}) }} />
+                        <Text style={{marginVertical: 8, fontSize: 18}}>Translation Subtitles</Text>
+                        <ModalSelector
+                            overlayStyle={{justifyContent: 'flex-end'}}
+                            cancelText="Cancel"
+                            data={this.state.nativeTracks}
+                            initValue={this.state.selectedNativeTrackLabel}
+                            onChange={(option)=>{ this.setState({selectedNativeTrackKey: option.key}) }} />
                         <View style={styles.buttonBar}>
                             <Button title={strings("Cancel")} onPress={onCancel}/>
                             <Button title={strings("OK")} onPress={this.onPressOK}/>
@@ -94,5 +93,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row', 
         justifyContent: 'space-between',
         paddingHorizontal: 16,
+        marginTop: 18
     }
 });
