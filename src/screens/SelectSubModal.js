@@ -50,14 +50,14 @@ export default class SelectSubModal extends Component {
             >
                 <View style={styles.container}>
                     <View style={styles.modal}>
-                        <Text style={{marginVertical: 8, fontSize: 18}}>Transcription Subtitles</Text>
+                        <Text style={{marginVertical: 8, fontSize: 18}}>{strings("Transcription Subtitles")}</Text>
                         <ModalSelector
                             overlayStyle={{justifyContent: 'flex-end'}}
                             cancelText="Cancel"
                             data={this.state.targetTracks}
                             initValue={this.state.selectedTargetTrackLabel}
                             onChange={(option)=>{ this.setState({selectedTargetTrackKey: option.key}) }} />
-                        <Text style={{marginVertical: 8, fontSize: 18}}>Translation Subtitles</Text>
+                        <Text style={{marginVertical: 8, fontSize: 18}}>{strings("Translation Subtitles")}</Text>
                         <ModalSelector
                             overlayStyle={{justifyContent: 'flex-end'}}
                             cancelText="Cancel"

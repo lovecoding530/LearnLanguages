@@ -1,12 +1,27 @@
 import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity, Modal, Picker, TouchableWithoutFeedback} from 'react-native';
 import api from '../api';
+import ModalSelector from 'react-native-modal-selector'
 import { strings } from '../i18n';
 import {LANGUAGES} from '../appdata';
 
 export default class SelectLangModal extends Component {
-    state={
-        selectedLang: "",
+    constructor(props){
+        super(props);
+        
+        let languages = LANGUAGES.map((lang, index)=>{
+            return {
+                key: lang.code,
+                label: lang.text,
+            }
+        });
+        this.state={
+            selectedLang: "",
+            languages: [
+                {kay: "", label: "None"},
+                ...languages
+            ]
+        }    
     }
 
     componentDidMount () {
@@ -25,15 +40,12 @@ export default class SelectLangModal extends Component {
                 <View style={styles.container}>
                     <View style={styles.modal}>
                         <Text style={styles.desc}>{strings('select lang modal desc')}</Text>
-                        <Picker
-                            selectedValue={this.state.selectedLang}
-                            style={{ height: 50, width: '100%' }}
-                            onValueChange={(selectedLang, itemIndex) => this.setState({selectedLang})}>
-                            <Picker.Item label={"None"} value={''} key={''}/>
-                            {LANGUAGES.map((lang, index)=>(
-                                <Picker.Item label={lang.text} value={lang.code} key={lang.code}/>
-                            ))}
-                        </Picker>
+                        <ModalSelector
+                            overlayStyle={{justifyContent: 'flex-end'}}
+                            cancelText="Cancel"
+                            data={this.state.languages}
+                            initValue={"None"}
+                            onChange={(option)=>{ this.setState({selectedLang: option.key}) }} />
                         <View style={styles.buttonBar}>
                             <Button title={strings("Cancel")} onPress={onCancel}/>
                             <Button title={strings("OK")} onPress={()=>onOK(this.state.selectedLang)}/>
@@ -62,10 +74,12 @@ const styles = StyleSheet.create({
     buttonBar: {
         flexDirection: 'row', 
         justifyContent: 'space-between',
+        marginTop: 16,
         paddingHorizontal: 16,
     }, 
 
     desc: {
-        fontSize: 17
+        fontSize: 17,
+        marginBottom: 16
     }
 });
