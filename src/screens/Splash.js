@@ -24,12 +24,12 @@ const itemSku = Platform.select({
 export default class Splash extends Component {
     state = {
         visibleLangModal: false,
-        visibleSubsModal: false,
+        visibleSubscribeModal: false,
     }
 
     async componentDidMount() {
         await this.checkPurchase();
-        
+
         setTimeout(async ()=>{
             if(await appdata.getNativeLang()){
                 this.props.navigation.navigate('MainStack');
@@ -60,16 +60,17 @@ export default class Splash extends Component {
     buyProduct = async () => {
         try {
             const products = await RNIap.getProducts([itemSku]);
-            console.log({products})
+            console.log({products});
             const availablePurchases = await RNIap.getAvailablePurchases();
+            console.log({availablePurchases});
             let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == itemSku);
             if(!monthlyPurchase){
                 // alert(Platform.OS == 'ios')
                 if(Platform.OS == 'ios') {
-                    this.setState({visibleSubsModal: true});
+                    this.setState({visibleSubscribeModal: true});
                 }else{
                     const purchased = await RNIap.buySubscription(itemSku);
-                    console.log({purchased});    
+                    console.log({purchased});
                 }
             }
         } catch(err) {
@@ -92,10 +93,10 @@ export default class Splash extends Component {
     }
 
     onOKSubscribe = async () => {
+        this.setState({visibleSubscribeModal: false});
         try {
             const purchased = await RNIap.buySubscription(itemSku);
             console.log({purchased});
-            this.setState({visibleSubsModal: false});
         } catch(err) {
             console.log(err); // standardized err.code and err.message available
             RNExitApp.exitApp();
@@ -103,7 +104,7 @@ export default class Splash extends Component {
     }
 
     onCancelSubscribe = () => {
-        this.setState({visibleSubsModal: false});
+        this.setState({visibleSubscribeModal: false});
         RNExitApp.exitApp();
     }
 
@@ -119,7 +120,7 @@ export default class Splash extends Component {
                     onOK={this.onSelectLang}
                 />
                 <SubscribeModal 
-                    visible={this.state.visibleSubsModal}
+                    visible={this.state.visibleSubscribeModal}
                     onCancel={this.onCancelSubscribe}
                     onOK={this.onOKSubscribe}
                 />

@@ -19,8 +19,8 @@ export default class SubscribeModal extends Component {
                         <Text style={styles.desc}>
                             To use this app, A $1.49/month purchase will be applied to your iTunes account at the end of the trial.
                             Subscriptions will automatically renew unless canceled within 24-hours before the end of the current period. You can cancel anytime with your iTunes account settings. Any unused portion of a free trial will be forfeited if you purchase a subscription.                        </Text>
-                        <Button title={"Terms of Service"}/>
-                        <Button title={"Privacy Policy"}/>
+                        <Button title={"Terms of Service"} onPress={()=>{}}/>
+                        <Button title={"Privacy Policy"} onPress={()=>{}}/>
                         <View style={styles.buttonBar}>
                             <Button title={strings("Cancel")} onPress={onCancel}/>
                             <Button title={strings("OK")} onPress={onOK}/>
