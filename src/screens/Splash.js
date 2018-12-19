@@ -10,14 +10,21 @@ import appdata, {APP_NAME} from '../appdata';
 import {currentLocaleTwoLetters} from '../i18n';
 import * as RNIap from 'react-native-iap';
 import SelectLangModal from './SelectLangModal';
+import SubscribeModal from './SubscribeModal';
 import { strings } from '../i18n';
 import RNExitApp from 'react-native-exit-app';
 
 const FREE_USE_TIME = 5 * 60 * 1000;
 
+const itemSku = Platform.select({
+    ios: 'com.scenebyscene.spanish.monthly.payment',
+    android: 'monthly.payment'
+});
+
 export default class Splash extends Component {
     state = {
-        visibleModal: false,
+        visibleLangModal: false,
+        visibleSubscribeModal: false,
     }
 
     async componentDidMount() {
@@ -27,7 +34,7 @@ export default class Splash extends Component {
             if(await appdata.getNativeLang()){
                 this.props.navigation.navigate('MainStack');
             }else{
-                this.setState({visibleModal: true});
+                this.setState({visibleLangModal: true});
             }
         }, 2000);
 
@@ -51,17 +58,20 @@ export default class Splash extends Component {
     }
 
     buyProduct = async () => {
-        const itemSku = Platform.select({
-            ios: 'com.scenebyscene.spanish.monthly.payment',
-            android: 'monthly.payment'
-        });
-
         try {
+            const products = await RNIap.getProducts([itemSku]);
+            console.log({products});
             const availablePurchases = await RNIap.getAvailablePurchases();
+            console.log({availablePurchases});
             let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == itemSku);
             if(!monthlyPurchase){
-                const purchased = await RNIap.buySubscription(itemSku);
-                console.log({purchased});
+                // alert(Platform.OS == 'ios')
+                if(Platform.OS == 'ios') {
+                    this.setState({visibleSubscribeModal: true});
+                }else{
+                    const purchased = await RNIap.buySubscription(itemSku);
+                    console.log({purchased});
+                }
             }
         } catch(err) {
             console.log(err); // standardized err.code and err.message available
@@ -73,13 +83,29 @@ export default class Splash extends Component {
         console.log({selectedLang});
         if(selectedLang){
             await appdata.setNativeLang(selectedLang);
-            this.setState({visibleModal: false});
-            this.props.navigation.navigate('MainStack');    
+            this.setState({visibleLangModal: false});
+            this.props.navigation.navigate('MainStack');
         }
     }
 
     onCancelSelectLang = () => {
-        this.setState({visibleModal: false});
+        this.setState({visibleLangModal: false});
+    }
+
+    onOKSubscribe = async () => {
+        this.setState({visibleSubscribeModal: false});
+        try {
+            const purchased = await RNIap.buySubscription(itemSku);
+            console.log({purchased});
+        } catch(err) {
+            console.log(err); // standardized err.code and err.message available
+            RNExitApp.exitApp();
+        }
+    }
+
+    onCancelSubscribe = () => {
+        this.setState({visibleSubscribeModal: false});
+        RNExitApp.exitApp();
     }
 
     render() {
@@ -89,9 +115,14 @@ export default class Splash extends Component {
                 <Text style={styles.title}>{strings(APP_NAME)}</Text>
                 <Text style={styles.detail}>{strings('Making Authentic Language Accessible')}</Text>
                 <SelectLangModal 
-                    visible={this.state.visibleModal}
+                    visible={this.state.visibleLangModal}
                     onCancel={this.onCancelSelectLang}
                     onOK={this.onSelectLang}
+                />
+                <SubscribeModal 
+                    visible={this.state.visibleSubscribeModal}
+                    onCancel={this.onCancelSubscribe}
+                    onOK={this.onOKSubscribe}
                 />
             </View>
         );
