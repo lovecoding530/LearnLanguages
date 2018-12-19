@@ -40,14 +40,19 @@ import Tooltip from '../components/Tooltip'
 import MyStatusBar from '../components/MyStatusBar'
 import Slider from 'react-native-slider'
 import { strings, isRTL } from '../i18n';
-import { getStatusBarHeight } from 'react-native-iphone-x-helper'
+import { getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper'
 
 const {width, height} = Dimensions.get('window')
 
 let NATIVE_LANG = 'en';
 
 const PANEL_HEADER_HEIGHT = 48;
-const PANEL_BOTTOM = PANEL_HEADER_HEIGHT + 22;
+
+const PANEL_BOTTOM = Platform.select({
+  ios: PANEL_HEADER_HEIGHT + getBottomSpace(),
+  android: PANEL_HEADER_HEIGHT + 22
+})
+
 const PANEL_HEIGHT = Platform.select({
   ios: height - getStatusBarHeight(true),
   android: height
