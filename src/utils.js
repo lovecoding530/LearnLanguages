@@ -79,10 +79,21 @@ function strip(html){
   return doc.documentElement.textContent || "";
 }
 
+function getVideoIdFromYoutubeLink(link){
+  var regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  var match = link.match(regExp);
+  if (match && match[2].length == 11) {
+    return match[2];
+  } else {
+    return null
+  }
+}
+
 export {
   copy,
   xmlToJson,
   qsToJson,
   timeStringFromSeconds,
   strip,
+  getVideoIdFromYoutubeLink,
 }

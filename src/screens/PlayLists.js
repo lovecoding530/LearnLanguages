@@ -1,10 +1,13 @@
 import React, {Component} from 'react';
-import {StyleSheet, Text, View, Button, FlatList, Image, Platform} from 'react-native';
+import {StyleSheet, Text, View, Button, FlatList, Image, Platform, TouchableOpacity} from 'react-native';
 import PlayListItem from "../components/PlayListItem";
 import api from '../api';
+import {getVideoIdFromYoutubeLink} from '../utils';
 import { strings } from '../i18n';
 import appdata, {TARGET_LANG, APP_NAME} from '../appdata';
 import { getStatusBarHeight } from 'react-native-iphone-x-helper'
+import DialogInput from 'react-native-dialog-input';
+import Dialog from "react-native-dialog";
 
 export default class PlayLists extends Component {
     state = {
@@ -13,6 +16,8 @@ export default class PlayLists extends Component {
         humanChannelId: "UCxbq9z7XbThxhIxx2dyWSMg",
         autoChannelId: "UC8XwOvmFVdImmPSaJF-OUew",
         nextPageToken: "", 
+        sharingDialogVisible: false,
+        pastedVideoUrl: "",
     }
 
     async componentDidMount() {
@@ -44,12 +49,29 @@ export default class PlayLists extends Component {
         navigate('VideoList', {playlistId: item.id, playlistTitle: item.snippet.title, human, auto})
     }
 
+    onPasteYoutubeLink = () => {
+        if(!this.state.pastedVideoUrl) return;
+        let sharedVideoId = getVideoIdFromYoutubeLink(this.state.pastedVideoUrl);
+        this.setState({
+            sharingDialogVisible: false,
+            pastedVideoUrl: ""
+        });
+        if(sharedVideoId){
+            let {navigation: {navigate}} = this.props;        
+            navigate('Player', {videoId: sharedVideoId, shared: true});    
+        }
+    }
+
     render(){ 
         return (
             <View style={{flex: 1}}>
                 <View style={styles.nav}>
                     <Image source={require('../assets/logo.png')} style={styles.navIcon}/>
                     <Text style={styles.navTitle}>{strings(APP_NAME)}</Text>
+                    <View style={{flex: 1}}/>
+                    <TouchableOpacity onPress={()=>{this.setState({sharingDialogVisible: true})}}>
+                        <Image source={require('../assets/add.png')} style={styles.addIcon}/>
+                    </TouchableOpacity>
                 </View>
                 <FlatList
                     contentContainerStyle={styles.FlatList}
@@ -64,6 +86,27 @@ export default class PlayLists extends Component {
                     onEndReachedThreshold={0.1}
                     onEndReached={this.onEndReached}
                 />
+                <Dialog.Container 
+                    visible={this.state.sharingDialogVisible}
+                    contentStyle={{width: '80%'}}
+                >
+                    <Dialog.Title>Add new video</Dialog.Title>
+                    <Dialog.Description>
+                        Paste link to YouTube video below.
+                    </Dialog.Description>
+                    <Dialog.Input onChangeText={(pastedVideoUrl)=>this.setState({pastedVideoUrl})}/>
+                    <Dialog.Button 
+                        label="Cancel" 
+                        onPress={()=>this.setState({
+                            sharingDialogVisible: false,
+                            pastedVideoUrl: ""
+                        })}
+                    />
+                    <Dialog.Button 
+                        label="Done" 
+                        onPress={this.onPasteYoutubeLink}
+                    />
+                </Dialog.Container>
             </View>
         )
     }
@@ -90,6 +133,12 @@ const styles = StyleSheet.create({
         width: 32, 
         height: 32,
         marginRight: 8
+    },
+
+    addIcon: {
+        width: 30, 
+        height: 30,
+        marginHorizontal: 4,
     },
 
     navTitle: {
