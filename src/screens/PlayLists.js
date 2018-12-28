@@ -6,7 +6,6 @@ import {getVideoIdFromYoutubeLink} from '../utils';
 import { strings } from '../i18n';
 import appdata, {TARGET_LANG, APP_NAME} from '../appdata';
 import { getStatusBarHeight } from 'react-native-iphone-x-helper'
-import DialogInput from 'react-native-dialog-input';
 import Dialog from "react-native-dialog";
 
 export default class PlayLists extends Component {

@@ -189,7 +189,7 @@ export default class Player extends Component{
   _handleAppStateChange = (nextAppState) => {
     if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
       console.log('App has come to the foreground!')
-      this.setState({play: true});
+      this.setState({play: false});
     }else{
       console.log('App has come to the background!')
       this.setState({play: false});
