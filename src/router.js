@@ -32,6 +32,9 @@ const HumanStack = createStackNavigator({
     },
     VideoList: {
         screen: VideoList, 
+        navigationOptions: {
+            gesturesEnabled: false
+        }
     },
 });
 
@@ -52,6 +55,9 @@ const AutoStack = createStackNavigator({
     },
     VideoList: {
         screen: VideoList, 
+        navigationOptions: {
+            gesturesEnabled: false
+        }
     },
 });
 
@@ -113,5 +119,8 @@ export const RootStack = createStackNavigator(
     },
     {
       headerMode: 'none',
+      navigationOptions: {
+          gesturesEnabled: false,
+      }
     }
 );
