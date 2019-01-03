@@ -58,6 +58,9 @@ const PANEL_HEIGHT = Platform.select({
   android: height
 })
 
+var flagFill = require('../assets/flag-fill.png');
+var flagEmpty = require('../assets/flag-empty.png');
+
 export default class Player extends Component{
 
   constructor(props){
@@ -830,11 +833,7 @@ export default class Player extends Component{
                   <TouchableOpacity 
                     style={{padding: 8,}}
                     onPress={this.onToggleFlag}>
-                    {isFlagged ? 
-                      <Icon name="flag" size={20} color='red' solid/>
-                      :
-                      <Icon name="flag" size={20} color='red' regular/>
-                    }
+                    <Image source={isFlagged ? flagFill : flagEmpty} style={{width: 20, height: 24, resizeMode: 'contain'}}/>
                   </TouchableOpacity>
                 </View>
                 :
