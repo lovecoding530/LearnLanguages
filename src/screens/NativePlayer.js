@@ -831,9 +831,16 @@ export default class Player extends Component{
                     {currentTargetSubtitleText}
                   </ParsedText>
                   <TouchableOpacity 
-                    style={{padding: 8,}}
+                    style={{padding: 8}}
                     onPress={this.onToggleFlag}>
-                    <Image source={isFlagged ? flagFill : flagEmpty} style={{width: 20, height: 24, resizeMode: 'contain'}}/>
+                    <Image 
+                      source={isFlagged ? flagFill : flagEmpty} 
+                      style={{
+                        width: 20, 
+                        height: 24, 
+                        resizeMode: 'contain'
+                      }}
+                    />
                   </TouchableOpacity>
                 </View>
                 :
