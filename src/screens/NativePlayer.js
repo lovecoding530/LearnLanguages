@@ -42,6 +42,13 @@ import Slider from 'react-native-slider'
 import { strings, isRTL } from '../i18n';
 import { getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper'
 
+import { 
+  AdMobBanner, 
+  AdMobInterstitial, 
+  PublisherBanner,
+  AdMobRewarded
+} from 'react-native-admob'
+
 const {width, height} = Dimensions.get('window')
 
 let NATIVE_LANG = 'en';
@@ -923,6 +930,11 @@ export default class Player extends Component{
             </View>
           </View>
         </SlidingUpPanel>
+        <AdMobBanner
+          bannerSize="fullBanner"
+          adUnitID="ca-app-pub-3940256099942544~1458002511"
+          testDeviceID="EMULATOR"
+          didFailToReceiveAdWithError={()=>{}} />
         {(this.state.subtitleTracks && this.state.targetTrack && this.state.nativeTrack) &&
           <SelectSubModal
             visible={this.state.modalVisible}
