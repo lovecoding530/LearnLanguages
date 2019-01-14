@@ -815,6 +815,13 @@ export default class Player extends Component{
             style={styles.subtitleView} 
             onLayout={this.onLayoutSubtitleView}
           >
+            <AdMobBanner
+              adSize="fullBanner"
+              adUnitID="ca-app-pub-3940256099942544/2934735716"
+              testDevices={[AdMobBanner.simulatorId]}
+              onAdFailedToLoad={error => console.error(error)} 
+            />
+
             <View style={styles.transcription}>
               {this.state.showTranscription ?
                 <View style={{flexDirection: 'row'}}>
@@ -930,11 +937,6 @@ export default class Player extends Component{
             </View>
           </View>
         </SlidingUpPanel>
-        <AdMobBanner
-          bannerSize="fullBanner"
-          adUnitID="ca-app-pub-3940256099942544~1458002511"
-          testDeviceID="EMULATOR"
-          didFailToReceiveAdWithError={()=>{}} />
         {(this.state.subtitleTracks && this.state.targetTrack && this.state.nativeTrack) &&
           <SelectSubModal
             visible={this.state.modalVisible}
