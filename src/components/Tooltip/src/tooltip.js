@@ -508,8 +508,6 @@ class Tooltip extends Component<Props, State> {
     arrowTransform.unshift({ rotate: this.getArrowRotation(placement) });
     arrowStyle = [...arrowStyle, { transform: arrowTransform }];
 
-    console.log({arrowDynamicStyle})
-
     return (
       <View>
         {/* This renders the fullscreen tooltip */}
