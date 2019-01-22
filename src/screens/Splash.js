@@ -6,20 +6,12 @@ import {
   Image,
   Text,
 } from 'react-native';
-import appdata, {APP_NAME} from '../appdata';
-import {currentLocaleTwoLetters} from '../i18n';
-import * as RNIap from 'react-native-iap';
+import appdata, {APP_NAME, ITEM_SKU, FREE_USE_TIME} from '../appdata';
 import SelectLangModal from './SelectLangModal';
 import SubscribeModal from './SubscribeModal';
 import { strings } from '../i18n';
-import RNExitApp from 'react-native-exit-app';
-
-const FREE_USE_TIME = 5 * 60 * 1000;
-
-const itemSku = Platform.select({
-    ios: 'com.scenebyscene.spanish.monthly.payment',
-    android: 'monthly.payment'
-});
+import * as RNIap from 'react-native-iap';
+import store from '../store';
 
 export default class Splash extends Component {
     state = {
@@ -37,45 +29,32 @@ export default class Splash extends Component {
                 this.setState({visibleLangModal: true});
             }
         }, 2000);
-
     }
 
     checkPurchase = async () => {
-        let time = new Date().getTime();
-        let firstRunTime = await appdata.getItem('first-run-time');
-
-        if(firstRunTime){
-            let usedTime = time - firstRunTime;
-            setTimeout(async ()=>{
-                await this.buyProduct();
-            }, FREE_USE_TIME - usedTime);
+        const availablePurchases = await RNIap.getAvailablePurchases();
+        let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == ITEM_SKU);
+        if (monthlyPurchase){
+            store.isPurchased = true;
         }else{
-            setTimeout(async ()=>{
-                await this.buyProduct();
-            }, FREE_USE_TIME);
-            appdata.setItem('first-run-time', time);
-        }
-    }
-
-    buyProduct = async () => {
-        try {
-            const products = await RNIap.getProducts([itemSku]);
-            console.log({products});
-            const availablePurchases = await RNIap.getAvailablePurchases();
-            console.log({availablePurchases});
-            let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == itemSku);
-            if(!monthlyPurchase){
-                // alert(Platform.OS == 'ios')
-                if(Platform.OS == 'ios') {
-                    this.setState({visibleSubscribeModal: true});
-                }else{
-                    const purchased = await RNIap.buySubscription(itemSku);
-                    console.log({purchased});
-                }
+            store.isPurchased = false;
+            let time = new Date().getTime();
+            let firstRunTime = await appdata.getItem('first-run-time');
+            if(firstRunTime){
+                let usedTime = time - firstRunTime;
+                setTimeout(async ()=>{
+                    if(!store.isPurchased){
+                        this.setState({visibleSubscribeModal: true});
+                    }
+                }, FREE_USE_TIME - usedTime);
+            }else{
+                setTimeout(async ()=>{
+                    if(!store.isPurchased){
+                        this.setState({visibleSubscribeModal: true});
+                    }
+                }, FREE_USE_TIME);
+                appdata.setItem('first-run-time', time);
             }
-        } catch(err) {
-            console.log(err); // standardized err.code and err.message available
-            RNExitApp.exitApp();
         }
     }
 
@@ -92,22 +71,6 @@ export default class Splash extends Component {
         this.setState({visibleLangModal: false});
     }
 
-    onOKSubscribe = async () => {
-        this.setState({visibleSubscribeModal: false});
-        try {
-            const purchased = await RNIap.buySubscription(itemSku);
-            console.log({purchased});
-        } catch(err) {
-            console.log(err); // standardized err.code and err.message available
-            RNExitApp.exitApp();
-        }
-    }
-
-    onCancelSubscribe = () => {
-        this.setState({visibleSubscribeModal: false});
-        RNExitApp.exitApp();
-    }
-
     render() {
         return (
             <View style={styles.container}>
@@ -121,8 +84,11 @@ export default class Splash extends Component {
                 />
                 <SubscribeModal 
                     visible={this.state.visibleSubscribeModal}
-                    onCancel={this.onCancelSubscribe}
-                    onOK={this.onOKSubscribe}
+                    onCancel={()=>this.setState({visibleSubscribeModal: false})}
+                    onSuccess={()=>{
+                        this.setState({visibleSubscribeModal: false});
+                        store.isPurchased = true;
+                    }}
                 />
             </View>
         );

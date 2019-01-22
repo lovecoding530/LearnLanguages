@@ -800,7 +800,7 @@ export default class Player extends Component{
                       style={{padding: 8}}
                       onPress={this.onShareScene}
                     >
-                        <Icon name="copy" size={16} color='#fff' regular/>
+                      <Icon name="copy" size={16} color='#fff' regular/>
                   </TouchableOpacity>
                 </View>
               </View>

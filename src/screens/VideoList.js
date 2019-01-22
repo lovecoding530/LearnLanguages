@@ -1,8 +1,10 @@
 import React, {Component} from 'react';
-import {StyleSheet, Text, View, Button, FlatList, Image, SafeAreaView} from 'react-native';
+import {StyleSheet, Text, View, Button, FlatList, Image, SafeAreaView, TouchableOpacity} from 'react-native';
 import VideoListItem from "../components/VideoListItem";
+import SubscribeModal from './SubscribeModal';
 import api from '../api';
 import appdata, {FAV_ICON} from '../appdata';
+import store from '../store';
 
 export default class VideoList extends Component {
     static navigationOptions = ({ navigation }) => {
@@ -19,6 +21,7 @@ export default class VideoList extends Component {
             playlistId,
             nextPageToken: "",
             focus: true,
+            visibleSubscribeModal: false
         };
     }
 
@@ -67,6 +70,26 @@ export default class VideoList extends Component {
                         onEndReached={this.onEndReached}
                     />
                 </View>
+                {!store.isPurchased &&
+                    <TouchableOpacity 
+                        onPress={()=>this.setState({visibleSubscribeModal: true})}
+                        style={{
+                            padding: 8,
+                            alignItems: "center"
+                        }}
+                    >
+                        <Text>Subscribe to remove all ads</Text>
+                    </TouchableOpacity>            
+                }
+                <SubscribeModal 
+                    visible={this.state.visibleSubscribeModal}
+                    onCancel={()=>this.setState({visibleSubscribeModal: false})}
+                    onSuccess={()=>{
+                        this.setState({visibleSubscribeModal: false});
+                        store.isPurchased = true;
+                        this.forceUpdate();
+                    }}
+                />
             </SafeAreaView>
         )
     }
