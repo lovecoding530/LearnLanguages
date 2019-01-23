@@ -33,6 +33,7 @@ export default class Splash extends Component {
 
     checkPurchase = async () => {
         const availablePurchases = await RNIap.getAvailablePurchases();
+        console.log({availablePurchases})
         let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == ITEM_SKU);
         if (monthlyPurchase){
             store.isPurchased = true;

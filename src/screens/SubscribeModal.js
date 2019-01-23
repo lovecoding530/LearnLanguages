@@ -49,6 +49,8 @@ export default class SubscribeModal extends Component {
     onAcceptPrivacy = async () => {
         this.setState({visiblePrivacyModal: false});
         try {
+            const products = await RNIap.getProducts([ITEM_SKU]);
+            console.log({products});
             const purchased = await RNIap.buySubscription(ITEM_SKU);
             console.log({purchased});
             this.props.onSuccess();
