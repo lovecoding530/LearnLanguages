@@ -42,6 +42,13 @@ import Slider from 'react-native-slider'
 import { strings, isRTL } from '../i18n';
 import { getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper'
 
+import { 
+  AdMobBanner, 
+  AdMobInterstitial, 
+  PublisherBanner,
+  AdMobRewarded
+} from 'react-native-admob'
+
 const {width, height} = Dimensions.get('window')
 
 let NATIVE_LANG = 'en';
@@ -793,7 +800,7 @@ export default class Player extends Component{
                       style={{padding: 8}}
                       onPress={this.onShareScene}
                     >
-                        <Icon name="copy" size={16} color='#fff' regular/>
+                      <Icon name="copy" size={16} color='#fff' regular/>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -808,6 +815,13 @@ export default class Player extends Component{
             style={styles.subtitleView} 
             onLayout={this.onLayoutSubtitleView}
           >
+            <AdMobBanner
+              adSize="fullBanner"
+              adUnitID="ca-app-pub-3940256099942544/2934735716"
+              testDevices={[AdMobBanner.simulatorId]}
+              onAdFailedToLoad={error => console.error(error)} 
+            />
+
             <View style={styles.transcription}>
               {this.state.showTranscription ?
                 <View style={{flexDirection: 'row'}}>

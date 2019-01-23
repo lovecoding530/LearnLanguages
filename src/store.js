@@ -9,6 +9,7 @@ class Store {
 
     sharedVideoId = "";
     navigator = null;
+    isPurchased = false;
 }
 
 let store = new Store();
