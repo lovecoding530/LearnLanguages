@@ -48,6 +48,7 @@ import {
   PublisherBanner,
   AdMobRewarded
 } from 'react-native-admob'
+import store from '../store';
 
 const {width, height} = Dimensions.get('window')
 
@@ -815,13 +816,14 @@ export default class Player extends Component{
             style={styles.subtitleView} 
             onLayout={this.onLayoutSubtitleView}
           >
-            <AdMobBanner
-              adSize="fullBanner"
-              adUnitID="ca-app-pub-3940256099942544/2934735716"
-              testDevices={[AdMobBanner.simulatorId]}
-              onAdFailedToLoad={error => console.error(error)} 
-            />
-
+            {!store.isPurchased &&
+              <AdMobBanner
+                adSize="fullBanner"
+                adUnitID="ca-app-pub-3940256099942544/2934735716"
+                testDevices={[AdMobBanner.simulatorId]}
+                onAdFailedToLoad={error => console.error(error)} 
+              />
+            }
             <View style={styles.transcription}>
               {this.state.showTranscription ?
                 <View style={{flexDirection: 'row'}}>
