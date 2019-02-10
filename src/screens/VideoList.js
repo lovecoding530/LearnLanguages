@@ -75,11 +75,12 @@ export default class VideoList extends Component {
                         onPress={()=>this.setState({visibleSubscribeModal: true})}
                         style={{
                             padding: 8,
-                            alignItems: "center"
+                            alignItems: "center",
+                            backgroundColor: "#00d900"
                         }}
                     >
-                        <Text>Subscribe to remove all ads</Text>
-                    </TouchableOpacity>            
+                        <Text style={{fontSize: 20}}>Subscribe to remove all ads</Text>
+                    </TouchableOpacity>
                 }
                 <SubscribeModal 
                     visible={this.state.visibleSubscribeModal}

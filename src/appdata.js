@@ -59,7 +59,6 @@ async function addHistoryVideo(videoItem){
         historyVideos.splice(existingIndex, 1);        
     }
     historyVideos = [videoItem, ...historyVideos];
-    historyVideos = historyVideos.slice(0, 10);
     await setItem('history', historyVideos);
 }
 
