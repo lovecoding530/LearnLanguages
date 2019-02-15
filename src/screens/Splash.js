@@ -20,6 +20,13 @@ export default class Splash extends Component {
     }
 
     async componentDidMount() {
+
+        let firstRunTime = await appdata.getItem('first-run-time');
+        if(!firstRunTime) {
+            let time = new Date().getTime();
+            appdata.setItem('first-run-time', time);
+        }
+
         await this.checkPurchase();
 
         setTimeout(async ()=>{
@@ -32,30 +39,25 @@ export default class Splash extends Component {
     }
 
     checkPurchase = async () => {
-        const availablePurchases = await RNIap.getAvailablePurchases();
-        console.log({availablePurchases})
-        let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == ITEM_SKU);
-        if (monthlyPurchase){
-            store.isPurchased = true;
-        }else{
-            store.isPurchased = false;
-            let time = new Date().getTime();
-            let firstRunTime = await appdata.getItem('first-run-time');
-            if(firstRunTime){
+        try {
+            const availablePurchases = await RNIap.getAvailablePurchases();
+            console.log({availablePurchases})
+            let monthlyPurchase = availablePurchases.find((purchase)=>purchase.productId == ITEM_SKU);
+            if (monthlyPurchase){
+                store.isPurchased = true;
+            }else{
+                store.isPurchased = false;
+                let time = new Date().getTime();
+                let firstRunTime = await appdata.getItem('first-run-time');
                 let usedTime = time - firstRunTime;
                 setTimeout(async ()=>{
                     if(!store.isPurchased){
                         this.setState({visibleSubscribeModal: true});
                     }
                 }, FREE_USE_TIME - usedTime);
-            }else{
-                setTimeout(async ()=>{
-                    if(!store.isPurchased){
-                        this.setState({visibleSubscribeModal: true});
-                    }
-                }, FREE_USE_TIME);
-                appdata.setItem('first-run-time', time);
-            }
+            }    
+        }catch {
+            store.isPurchased = false;
         }
     }
 
