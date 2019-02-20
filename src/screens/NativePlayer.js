@@ -32,7 +32,7 @@ import { timeStringFromSeconds, strip } from '../utils';
 import ParsedText from 'react-native-parsed-text';
 import SlidingUpPanel from 'rn-sliding-up-panel'
 import HTML from 'react-native-render-html';
-import appdata, {TARGET_LANG} from '../appdata';
+import appdata, {TARGET_LANG, AD_UNIT_ID} from '../appdata';
 import MySwitch from "../components/MySwitch";
 import SelectSubModal from './SelectSubModal'
 import Segment from 'react-native-segmented-control-tab'
@@ -818,10 +818,10 @@ export default class Player extends Component{
           >
             {!store.isPurchased &&
               <AdMobBanner
-                adSize="fullBanner"
-                adUnitID="ca-app-pub-3940256099942544/2934735716"
+                adSize="smartBannerPortrait"
+                adUnitID={AD_UNIT_ID}
                 testDevices={[AdMobBanner.simulatorId]}
-                onAdFailedToLoad={error => console.error(error)} 
+                onAdFailedToLoad={error => console.log(error)} 
               />
             }
             <View style={styles.transcription}>
