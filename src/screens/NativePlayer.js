@@ -247,13 +247,14 @@ export default class Player extends Component{
       }
     }else{
       if(currentTime >= this.state.currentTargetSubtitle.end){
-        this.setState({play: false});
         this.checkEnd();
+        this.setState({play: false});
       }
     }
   }
 
   checkEnd = async () => {
+    if(this.state.play == false) return;
     if(this.state.reviewMode){
       if(this.state.currentReviewScene == this.state.flaggedScenes.length - 1){
         await appdata.increaseWatchedCount(this.state.videoId);
