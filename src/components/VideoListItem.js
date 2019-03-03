@@ -9,6 +9,7 @@ import { timeStringFromSeconds } from '../utils';
 export default class VideoListItem extends Component {
     state = {
         flagCount: 0,
+        watchedCount: 0,
     }
 
     async componentDidMount() {
@@ -21,12 +22,10 @@ export default class VideoListItem extends Component {
             let selectedTrack = await appdata.getSelectedTracks(item.id);
             let flaggedScenes = await appdata.getFlaggedScenes(item.id, selectedTrack.target);
             let flagCount = flaggedScenes.length;
-            this.setState({flagCount});  
-        }
-    }
 
-    async setFlagCount(){
-        
+            let watchedCount = await appdata.getWatchedCount(item.id);
+            this.setState({flagCount, watchedCount});
+        }
     }
 
     render() {
@@ -48,8 +47,8 @@ export default class VideoListItem extends Component {
                 </View>
                 <View style={styles.titleView}>
                     <Text style={styles.title} numberOfLines={3}>{item.snippet.title}</Text>
-                    {/* <Text style={styles.detail} numberOfLines={3}>{item.snippet.channelTitle}</Text> */}
                     <View style={styles.flagView}>
+                        <Text style={{marginRight: 8}}>{this.state.watchedCount}x</Text>
                         <Icon name="flag" size={16} color='red' solid/>
                         <Text style={{marginLeft: 8}}>{this.state.flagCount}</Text>
                     </View>

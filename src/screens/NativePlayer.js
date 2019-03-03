@@ -253,11 +253,12 @@ export default class Player extends Component{
     }
   }
 
-  checkEnd = () => {
+  checkEnd = async () => {
     if(this.state.reviewMode){
       if(this.state.currentReviewScene == this.state.flaggedScenes.length - 1){
+        await appdata.increaseWatchedCount(this.state.videoId);
         Alert.alert(
-          strings("Ended"), 
+          strings("Ended"),
           strings("You have reached the last flagged scene, would you like to restart?"), [
             {
               text: strings('Cancel'), 
@@ -274,6 +275,7 @@ export default class Player extends Component{
       }
     }else{
       if(this.state.currentTargetSubtitle.index ==  this.state.targetSubtitles.length - 1){
+        await appdata.increaseWatchedCount(this.state.videoId);
         Alert.alert(
           strings("Ended"), 
           strings("You have reached the last scene, would you like to restart?"), [
@@ -292,7 +294,8 @@ export default class Player extends Component{
     }
   }
 
-  onEnd = () => {
+  onEnd = async () => {
+    await appdata.increaseWatchedCount(this.state.videoId);
     Alert.alert(
       strings("Ended"), 
       strings("You have reached the end, would you like to restart?"), [

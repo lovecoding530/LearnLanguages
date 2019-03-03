@@ -85,6 +85,15 @@ async function setCurrentTimeForHistoryVideo(videoId, currentTime){
     await setItem('history', historyVideos);
 }
 
+async function getWatchedCount(videoId){
+    return await getItem(`watched-count-${videoId}`) || 0;
+}
+
+async function increaseWatchedCount(videoId){
+    let watchedCount = await getWatchedCount(videoId);
+    await setItem(`watched-count-${videoId}`, watchedCount + 1);
+}
+
 async function getFlaggedScenes(videoId, trackKey){
     let key = `flagged-scenes-${videoId}-${trackKey}`;
     let flaggedScenes = await getItem(key);
@@ -150,4 +159,7 @@ export default {
 
     setShownTooltips,
     getShownTooltips,
+
+    getWatchedCount,
+    increaseWatchedCount
 }
