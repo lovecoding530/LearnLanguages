@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {StyleSheet, Text, View, Button, FlatList, Image, TouchableOpacity, SafeAreaView} from 'react-native';
 import VideoListItem from "../components/VideoListItem";
 import appdata, {FAV_ICON} from '../appdata';
+import { timeStringFromSeconds } from '../utils';
 
 export default class History extends Component {
     constructor(props){
@@ -9,16 +10,20 @@ export default class History extends Component {
         this.state = {
             videos: [], 
             focus: true,
+            totalUsedTime: 0
         }
     }
 
     async componentDidMount() {
         let videos = await appdata.getHistoryVideos();
-        this.setState({videos});
+        let totalUsedTime = await appdata.getTotalUsedTime();
+        this.setState({videos, totalUsedTime});
+
         this.props.navigation.addListener('willFocus', async (route) => { 
             let videos = await appdata.getHistoryVideos();
             this.setState({videos, focus: true});
         });
+
         this.props.navigation.addListener('willBlur', (route) => { 
             this.setState({focus: false});
         });
@@ -33,6 +38,7 @@ export default class History extends Component {
         return (
             <SafeAreaView style={{flex: 1}}>
                 <View style={{flex: 1}}>
+                    <Text style={styles.totalUsedTime}>Total used time: {timeStringFromSeconds(this.state.totalUsedTime)}</Text>
                     <FlatList
                         contentContainerStyle={styles.flatList}
                         data={this.state.videos}
@@ -76,6 +82,11 @@ const styles = StyleSheet.create({
     titleView: {
         flex: 1,
         marginHorizontal: 8,
+    },
+
+    totalUsedTime: {
+        fontSize: 22,
+        margin: 8,
     }
 });
   

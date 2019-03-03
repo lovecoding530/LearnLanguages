@@ -143,6 +143,17 @@ async function getShownTooltips(){
     return await getItem(key) || [];
 }
 
+async function increaseTotalUsedTime(timeInSec){
+    let key = `total-used-time`;
+    let totalUsedTime = await getTotalUsedTime();
+    await setItem(key, totalUsedTime + timeInSec);
+}
+
+async function getTotalUsedTime(){
+    let key = `total-used-time`;
+    return Math.floor(await getItem(key));
+}
+
 export default {
     getItem, 
     setItem, 
@@ -161,5 +172,8 @@ export default {
     getShownTooltips,
 
     getWatchedCount,
-    increaseWatchedCount
+    increaseWatchedCount,
+
+    getTotalUsedTime,
+    increaseTotalUsedTime
 }

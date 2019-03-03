@@ -74,6 +74,8 @@ export default class Player extends Component{
   constructor(props){
     super(props);
 
+    this.startTime = new Date();
+
     let {state: {params: {videoId, human, auto, shared, currentTime}}} = this.props.navigation;
     this.currentTime = currentTime || 0;
     let currentTimeInSec = parseInt(this.currentTime);
@@ -141,6 +143,7 @@ export default class Player extends Component{
 
     let selectedTracks = await appdata.getSelectedTracks(this.state.videoId);
     console.log("selectedTracks", selectedTracks);
+
     let targetTrack = targetTracks.find(track=>track.key==selectedTracks.target) ||
                       targetTracks.find(track=>track.from=='youtube') ||
                       targetTracks.find(track=>track.from=='amara');
@@ -178,10 +181,14 @@ export default class Player extends Component{
   }
 
   componentWillUnmount() {
+    let endTime = new Date();
+    let usedTime = endTime - this.startTime;
+
     if(this.keyboardDidShowListener) this.keyboardDidShowListener.remove();
     if(this.keyboardDidHideListener) this.keyboardDidHideListener.remove();
     AppState.removeEventListener('change', this._handleAppStateChange);
     appdata.setCurrentTimeForHistoryVideo(this.state.videoId, this.currentTime);
+    appdata.increaseTotalUsedTime(usedTime / 1000);
   }
 
   _keyboardDidShow = (e) => {
@@ -290,7 +297,7 @@ export default class Player extends Component{
               }
             }
           ]
-        )          
+        )
       }
     }
   }
