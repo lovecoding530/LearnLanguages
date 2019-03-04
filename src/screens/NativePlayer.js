@@ -475,7 +475,7 @@ export default class Player extends Component{
       this.setState({dictionaryData});
       this.dictionaryList.scrollToTop();  
     }else{
-      alert(strings("The glosbe server is down at the moment please check later."));
+      alert(strings("The glosbe server is down at the moment please check later"));
     }
   }
 
